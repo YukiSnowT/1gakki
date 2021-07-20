@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Document</title>
+</head>
+<body>
+    <h2>郵便番号検索</h2>
+    <p><label><br><input type="text" name = "postal-code" id="num" inputmode="numeric" placeholder="ここに郵便番号を入力"></label></p>
+    <p id="values"></p>
+</body>
+<script>
+    let url_yubin = "https://zipcloud.ibsnet.co.jp/api/search?zipcode="
+    const url_iwami ="https://zipcloud.ibsnet.co.jp/api/search?zipcode=6360212"
+    
+    const input = document.getElementById("num");
+    const result = document.getElementById("values");
+
+    //API取得
+    const getYubin = async(url) =>{
+        const r = await fetch(url, {mode : 'cors'})
+        return r.json();
+    }
+
+    //全角の数字を半角に変換
+    hanZen = (str) => {
+        let n = str.replace(/[０-９]/g, function(s) {
+            return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        }); 
+        return n;
+    }
+
+    //ハイフン入りの郵便番号として正しいかチェック
+    checkNum = (str) =>{
+        return /^\d{3}-?\d{0,}$/g.test(str)||/^\d{3}－?\d{0,}$/g.test(str)
+    }
+
+    //入力した数字を表示
+    displayValue = (e) =>{
+        let n = hanZen(e.target.value);
+        if(checkNum(n)){
+            n=n.replace("-","");
+            n=n.replace("－","");
+        }
+        const len = n.length;
+        if(isNaN(Number(n))){
+            result.textContent = "正しい値を入力してください";
+        }else if(len>7){
+            result.textContent = "郵便番号は7桁で入力してください";
+        }else if(len<7){
+            result.textContent = "";
+        }else{
+            result.textContent = n; //ここを取得したデータで書き換える
+        }
+    }
+
+    input.addEventListener("input",displayValue);
+
+
+</script>
+</html>

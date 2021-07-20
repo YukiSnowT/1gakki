@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>的あて ～ Hit a Target</title>
+    <style>
+
+        section {
+            display: flex;
+            width: 610px;
+            height: 610px;
+            padding: 0;
+            border: 3px solid black;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            flex-wrap: wrap;
+            color: rgb(75, 75, 75);
+            font-weight: lighter;
+        } 
+        h1,p{
+            margin: 0;
+        }
+        #A, #B, #C, #D, #E, #F, #G, #H, #I, #J, #K, #L, #M, #N, #O, #P, #Q, #R, #S, #T, #U, #V, #W, #X, #Y {
+            width: 120px;
+            height: 120px;
+            border: 1px solid black;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            font-size: 5em;
+            cursor: crosshair;
+        }
+        .set1 {
+            background-image: url(images/monster07.png);
+        }
+        .set2 {
+            background-image: url(images/monster06.png);
+        }
+        .set3 {
+            background-image: url(images/monster02.png);
+        }
+        
+        
+        .break{
+            background-image: url(images/bakuhatsu3.png);
+        }
+
+        .set1,.set2,.set3,.break,.target{
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        .people1{
+            background-image: url(images/business_man2_3_surprise.png);
+        }
+        .people2{
+            background-image: url(images/necchusyou_face_girl2.png);
+        }
+        .people3{
+            background-image: url(images/unhappy_man3.png);
+        }
+
+        /* .target{
+            background-image: url(images/gun_syoujun_scope.png);
+        } */
+
+        .clear1{
+            background-image: url(images/clear1.png);
+        }
+        .clear2{
+            background-image: url(images/clear2.png);
+        }
+        .clear3{
+            background-image: url(images/clear3.png);
+        }
+        
+        .people1,.people2,.people3,.clear1,.clear2,.clear3{
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 80%;
+        }
+        #start{
+            width: 200px;
+            height: 50px;
+            margin: 0 0 3px 0;
+            line-height: 52px;
+            text-align: center;
+            font-size: 30px;
+            font-weight: bold;
+            border: 3px outset olive ;
+            background-color: orange;
+            color: black;
+            text-shadow : 
+                2px  2px 2px white;
+        }
+        #score{
+            width: 190px;
+            height: 50px;
+            margin: 0 0 3px 0;
+            padding-right: 10px;
+            line-height: 52px;
+            text-align: center;
+            font-size: 30px;
+            border: 3px solid;
+        }
+        #time{
+            height: 50px;
+            margin: 0 0 3px 20px;
+            padding-right: 10px;
+            line-height: 52px;
+            text-align: left;
+            font-size: 30px;
+        }
+        .flex{
+            display: flex;
+        }
+        #life{
+            margin-left: 30px;
+            font-size: 40px;
+            line-height: 50px;
+            color: red;
+        }
+
+
+
+    </style>
+</head>
+<body onselectstart="return false;">
+    <div id = "head">
+        <h1>的あてゲーム</h1>
+    </div>
+    <div id="setsumei">
+        <p>モンスターをクリックして退治しよう。<br>人には攻撃しないように注意。</p>
+    </div>
+    <div class = "flex">
+        <div id="start">START</div>
+        <div id="life"></div>
+        <div id="time">　</div>
+    </div>
+    <section>
+        <!-- ここにマス目が入る -->
+    </section>
+    
+</body>
+<script>
+    //グローバル変数の定義
+    const point = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y"]; 
+    let nowset = [0,-1,-1];
+    let count = 0;
+    let flag = 0;
+    let rnd = [0,0,0]
+    let rndp = [0,0];
+    let life = 5;
+    let check = true;
+    let setnum = ["set1","set2","set3"];
+    let setpeople = ["people1","people2"]
+    let start = 0;
+    let end = 0;
+    let time = 0;
+    
+    //マス目作り
+    function createDiv(block) {
+        const div = document.createElement("div");
+        div.textContent = "　"; 
+        div.setAttribute("id", block);
+        document.querySelector("section").appendChild(div);
+    }
+
+    // function createImg(file){
+    //     const img = document.createElement("img");
+    //     img.setAttribute("src",file);
+    //     img.setAttribute("width","100px");
+    //     document.querySelector("section").appendChild(img);
+        
+    // }
+
+    //照準の表示
+    function targetImage(c){
+        
+        document.getElementById(c).addEventListener("mouseover",function() {
+            if(check===true){this.textContent ="☩";}
+            // createImg("images/gun_syoujun_scope.png");
+        })
+        document.getElementById(c).addEventListener("mouseout",function() {
+            this.textContent = "　";
+        })
+        
+    }
+
+    //スタート
+    function gameStart(){
+        document.getElementById("start").addEventListener("click",function() {
+            if(count === 0){
+                rndSet1();
+                start = Date.now();
+                point.map((n) => clickButton(n));
+                document.getElementById("start").setAttribute("id" , "score");
+                document.getElementById("score").textContent = "0 点"
+                document.getElementById("life").textContent = countLife();
+            }
+            point.map((n) => targetImage(n));
+        })
+    }
+
+    //マス目クリック
+    function clickButton(c){
+        document.getElementById(c).addEventListener("click",function() {
+            if(count<11&&check){
+                if(point[nowset[0]] === c){
+                    rndSet1();
+                } else {
+                    life--;
+                    document.getElementById("life").textContent = countLife();
+                    if(life < 1){
+                        check = false;
+                        endTime();
+                    }
+                }
+            }else if(count<71&&check){
+                if(point[nowset[0]] === c){
+                    rndSet2(0);
+                }else if(point[nowset[1]] === c){
+                    rndSet2(1);
+                }else {
+                    life--;
+                    if(point[rndp[0]]===c||rndp[1]===c){life--;}
+                    document.getElementById("life").textContent = countLife();
+                    if(life < 1){
+                        check = false;
+                        endTime();
+                    }
+                }
+            }else if(count<100&&check){
+                if(point[nowset[0]] === c){
+                    rndSet3(0);
+                }else if(point[nowset[1]] === c){
+                    rndSet3(1);
+                }else if(point[nowset[2]] === c){
+                    rndSet3(2);
+                }else {
+                    life--;
+                    if(point[rndp[0]]===c||rndp[1]===c){life--;}
+                    document.getElementById("life").textContent = countLife();
+                    if(life < 1){
+                        check = false;
+                        endTime();
+                    }
+                }
+            }else if(count===100&&check){
+                check=false;
+                
+                resetImage("set1");
+                resetImage("set2");
+                resetImage("set3");
+                resetImage("break");
+                resetImage("people1");
+                resetImage("people2");
+                resetImage("people3");
+                
+                document.getElementById("L").setAttribute("class", "clear1");
+                document.getElementById("M").setAttribute("class", "clear2");
+                document.getElementById("N").setAttribute("class", "clear3");
+                document.getElementById("score").textContent = "SUCCESS!!";
+                document.getElementById("life").textContent = countLife();
+                endTime();
+
+            }
+            //  randomImage();
+            rndEnemy();
+            rndPeople();
+        })
+    }
+
+    //残機カウント
+    function countLife(){
+        let y = "";
+        for(i=0;i<life;i++){
+            y=y+"♡";
+        }
+        if(y===""){
+            y="Game Over";
+        }
+        return y;
+    }
+
+    //時間計測終了
+    function endTime(){
+        end = Date.now();
+        time = end - start;
+        let sec = (time-time%1000)/1000;
+        let secd =  (time-time%100)/100 - sec*10;
+        console.log(time);
+        console.log( sec + "." + secd + "秒" );
+        document.getElementById("time").textContent = "記録：" + sec + "." + secd + "秒";
+    }
+    //敵画像ランダム化
+    function rndEnemy(){
+        let n = []
+        for(i=0;i<3;i++){
+            n[i] = Math.floor( Math.random()*3 );
+            if(n[i]==0){
+                setnum[i]="set1";
+            } else if(n[i]==1){
+                setnum[i]="set2";
+            } else{
+                setnum[i]="set3";
+            }
+        }
+    }
+
+    //人画像ランダム化
+    function rndPeople(){
+        let n = []
+        for(i=0;i<2;i++){
+            n[i] = Math.floor( Math.random()*3 );
+            if(n[i]==0){
+                setpeople[i]="people1";
+            } else if(n[i]==1){
+                setpeople[i]="people2";
+            } else{
+                setpeople[i]="people3";
+            }
+        }
+    }
+
+    //ステージ１
+    function rndSet1(){
+        rnd[0] = Math.round( Math.random()*24 );
+            while(nowset[0]===rnd[0]){
+                rnd[0] = Math.round( Math.random()*24 );
+            }
+        resetImage("break");
+        if(count > 0){
+            document.getElementById(point[nowset[0]]).setAttribute("class" , "break");        
+        }
+        document.getElementById(point[rnd[0]]).setAttribute("class", setnum[0]);
+        nowset[0]=rnd[0];
+        count++;
+        if(count !==1){
+            document.getElementById("score").textContent = count-1 + " 点";
+        }
+    }
+    
+    //ステージ２
+    function rndSet2(x){
+        if(flag === 0){
+            rnd[0] = Math.round( Math.random()*24 );
+            rnd[1] = Math.round( Math.random()*24 );
+            while(nowset.some((n)=> n==rnd[0])){
+                rnd[0] = Math.round( Math.random()*24 );
+            }
+            while(nowset.some((n)=> n==rnd[1])||rnd[0]===rnd[1]){
+                rnd[1] = Math.round( Math.random()*24 );
+            }
+        }
+        resetImage("break");
+
+        document.getElementById(point[nowset[x]]).setAttribute("class" , "break");
+        //ここで人のセット
+        if(count>50){
+            rndSetp(2);
+        } else if(count>30){
+            rndSetp(1);
+        }
+        //ここまで
+        if(flag === 0){
+            document.getElementById(point[rnd[0]]).setAttribute("class", setnum[0]);
+            document.getElementById(point[rnd[1]]).setAttribute("class", setnum[1]);
+            nowset[0]=rnd[0];
+            nowset[1]=rnd[1];
+        }
+        count++;
+
+        if(flag === 0){flag = 1;}
+        else{flag = 0;}
+        if(count !==1){
+            document.getElementById("score").textContent = count-1 + " 点";
+        }
+    }
+
+        //ラストステージ
+    function rndSet3(x){
+        if(flag === 0){
+            rnd[0] = Math.round( Math.random()*24 );
+            rnd[1] = Math.round( Math.random()*24 );
+            rnd[2] = Math.round( Math.random()*24 );
+            while(nowset.some((n)=> n==rnd[0])){
+                rnd[0] = Math.round( Math.random()*24 );
+            }
+            while(nowset.some((n)=> n==rnd[1])||rnd[0]===rnd[1]){
+                rnd[1] = Math.round( Math.random()*24 );
+            }
+            while(nowset.some((n)=> n==rnd[2])||rnd[0]===rnd[2]||rnd[1]===rnd[2]){
+                rnd[2] = Math.round( Math.random()*24 );
+            }
+        }
+        resetImage("break");
+
+        document.getElementById(point[nowset[x]]).setAttribute("class" , "break");
+        rndSetp(2);
+        if(flag === 0){
+            document.getElementById(point[rnd[0]]).setAttribute("class", setnum[0]);
+            document.getElementById(point[rnd[1]]).setAttribute("class", setnum[1]);
+            document.getElementById(point[rnd[2]]).setAttribute("class", setnum[2]);
+            nowset[0]=rnd[0];
+            nowset[1]=rnd[1];
+            nowset[2]=rnd[2];
+        }
+        count++;
+
+        if(flag === 0){flag = 1;}
+        else if(flag === 1){flag = 2;}
+        else{flag = 0;}
+        if(count !==1){
+            document.getElementById("score").textContent = count-1 + " 点";
+        }
+    }
+
+
+    //ステージ３以降・人のセット
+    function rndSetp(x){
+        
+        rndp[0] = Math.round( Math.random()*24 );
+        rndp[1] = Math.round( Math.random()*24 );
+        while(nowset.some((n)=> n==rndp[0])||rnd.some((m)=> m==rndp[0])){
+            rndp[0] = Math.round( Math.random()*24 );
+        }
+        while(nowset.some((n)=> n==rndp[1])||rnd.some((m)=> m==rndp[1]||rndp[0]==rndp[1])){
+            rndp[1] = Math.round( Math.random()*24 );
+        }
+        
+        console.log(nowset);
+        console.log(rnd);
+        console.log(rndp);
+
+        resetImage("people1")
+        resetImage("people2")
+        resetImage("people3")
+
+        for(i=0;i<x;i++){
+            document.getElementById(point[rndp[i]]).setAttribute("class", setpeople[i]);
+        }
+    }
+
+    //画像のランダム表示
+    // function randomImage(){
+    //     const enemy = ["monster02.png","monster06.png","monster07.png"]
+    //     const people = ["business_man2_3_surprise.png","necchusyou_face_girl2.png","unhappy_man3.png"]
+    //     let n = Math.floor( Math.random()*3 );
+    //     Array.form(document.getElementsByClassName("set")).map((n) => n.style.backgroundImage = 'url(./images/' + enemy[n] + ')');
+        
+    // }
+
+    //画像のリセット
+    function resetImage(name){
+        while(true){
+            try{
+                document.getElementsByClassName(name)[0].removeAttribute("class");
+            } catch {break;}
+        }
+    }
+
+    point.map((n) => createDiv(n));
+    
+    gameStart();
+
+</script>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Jack</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- https://qiita.com/sho-17/items/e2ab91bf775bf10ecb23 -->
+</head>
+<body>
+    <div class="container">
+
+        <p>ディーラー</p>
+        <p id="dealer-result"></p>
+        <div id="dealer" class="stage">
+          <div id="d1" class="card-back"></div>
+          <div id="d2" class="card-front"></div>
+        </div>
+      
+        <p>プレイヤー</p>
+        <p id="result"></p>
+        <div id="player" class="stage">
+          <div id="p1" class="card-front"></div>
+          <div id="p2" class="card-front"></div>
+        </div>
+      
+        <div class="btn">
+          <input type="button" value="スタンド" id="stand">
+          <input type="button" value="ヒット" id="hit">
+        </div>
+      
+      </div>
+      
+</body>
+<script src="java.js"></script>
+</html>

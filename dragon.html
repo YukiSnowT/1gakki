@@ -1,0 +1,2899 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドラクエ風ドット文字画像ジェネレーター</title>
+</head>
+<style>
+    p {
+        margin: 0;
+    }
+
+    body {
+        background-color: #ddd;
+    }
+
+    #dragon {
+        background-color: #000;
+    }
+
+    details {
+        margin-left: 1em;
+    }
+
+    summary {
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .option {
+        margin: 0;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    #sample {
+        margin-top: 40px;
+    }
+
+    .sample {
+        margin: 0 0 -15px -15px;
+    }
+    div{
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        height: 734px;
+    }
+</style>
+
+<body>
+    <h2>ドラクエ風ドット文字ジェネレーター</h2>
+    <p>入力したテキストをドラクエ風の文字画像に変換し、画像にして出力します。<br>※対応文字は全角ひらがな・一部記号のみ。<br>※オプションを変更したら、テキストを変更すると反映されます。</p>
+    <details>
+        <summary>使用可能文字一覧</summary>
+        「ゐ」「ゑ」を除くひらがな、カタカナ、数字、大文字のアルファベットが使用可能です。<br>（あ行の小文字のみ通常サイズになります）<br>、。ー｜！？゛゜・「」＊：…↑↓←→■□　通常通り使えます。<br>＋＠￥｛｝　s t
+        m o w h l r(半角)　特殊な記号に置き換わります。<br>罫線全般　枠線として使用可能です。太線と細線は同じ扱いですが、太い縦線（┃）のみ特殊文字になります。
+    </details>
+    <p class="option">オプション</p>
+    <label for="fontC">文字色：</label>
+    <select id="fontC">
+        <option value="white" selected>白</option>
+        <option value="#FF7763">赤</option>
+        <option value="#4FDF4B">緑</option>
+        <option value="#3FBFFF">青</option>
+        <!-- <option value="red">赤</option> -->
+    </select>
+    　
+    <label><input type="checkbox" id="waku" checked>枠線</label>
+    <label><input type="checkbox" id="tsume">文字詰め</label>
+    <label><input type="checkbox" id="wakuW">枠線を白で固定<br></label>
+    <label for="paddingLR">左右余白：</label>
+    <select id="paddingLR">
+        <option value="0">0</option>
+        <option value="10">1</option>
+        <option value="20" selected>2</option>
+        <option value="30">3</option>
+        <option value="30">4</option>
+        <option value="30">5</option>
+    </select>
+    <label for="paddingTB">　上下余白：</label>
+    <select id="paddingTB">
+        <option value="0">0</option>
+        <option value="10">1</option>
+        <option value="20" selected>2</option>
+        <option value="30">3</option>
+        <option value="40">4</option>
+        <option value="50">5</option>
+    </select>
+    <details>
+        <summary>HELP</summary>
+        文字色：文字の色を変更します。デフォルトは白。<br>枠線：文字を囲む枠線です。チェックを外すと枠線が消えます。<br>文字詰め：文字の左右幅を詰めます。文字によっては見辛くなるかも。<br>左右・上下余白：読んで字のごとく。上下余白は濁音・半濁音のバランスを取るために下部を広めにしています。
+    </details>
+    <details>
+        <summary>SAMPLE</summary>
+        <div>
+            <img src="test/draquefu (3).jpg" alt="" width="500px">
+            <img src="test/draquefu (4).jpg" alt="" width="500px">
+            <h3>こんな感じで作れます。</h3>
+            <img src="test/draquefu (6).jpg" alt="" width="500px">
+            <img src="test/draquefu (11).jpg" alt="" width="500px">
+            <img src="test/draquefu.jpg" alt="" width="500px">
+        </div>
+    </details>
+    <label for="sample" class="sample">　サンプル画像の縮尺：</label>
+    <select id="sample">
+        <option value="0.1">0.1倍</option>
+        <option value="0.2" selected>0.2倍</option>
+        <option value="0.5">0.5倍</option>
+        <option value="1">原寸大</option>
+    </select>
+    <p><label><br><textarea name="file_main" id="file_main" cols="30" rows="10"
+                placeholder="文字を入力すると、この下にダウンロードリンクとサンプルが表示されます。"></textarea></label></p>
+    <h3></h3>
+    <canvas id="dragon" width="0" height="0"></canvas>
+</body>
+<script>
+
+    let wakusen = true;
+    let padding_x = 20;
+    let padding_y = 20;
+    let padding_b = 20;
+    let fontcolor = "white";
+    let flamecolor = "white";
+    let main_value = null;
+    let mojitsume = 0;
+    let bairitsu = 0.2;
+    const main = document.getElementById("file_main");
+    const canvas = document.getElementById("dragon");
+    const ctx = canvas.getContext("2d");
+
+    const nameA = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x, y + 10, 60, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 40, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x + 50, y + 40, 20, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameI = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+    }
+
+    const nameU = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x + 20, y, 30, 10);
+        ctx.fillRect(x + 20, y + 20, 40, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameE = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x + 10, y, 20, 10);
+        ctx.fillRect(x, y + 20, 60, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 20, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 30, 10);
+    }
+
+    const nameO = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 60, y, 10, 10);
+        ctx.fillRect(x, y + 10, 50, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 40, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameKa = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 40, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameKi = (x, y) => {
+        ctx.fillStyle = fontcolor
+        ctx.fillRect(x + 30, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 60, 10);
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 60, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 20, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameKu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameKe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 50, y, 10, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 40, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameKo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 40, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameSa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 20, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameSi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameSu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x, y + 10, 70, 10);
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 40, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 30, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameSe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 10, 10);
+        ctx.fillRect(x + 50, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameSo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 40, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 70, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 30, 10);
+    }
+
+    const nameTa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 60, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 30, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 30, 10);
+    }
+
+    const nameTi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 60, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 40, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameTu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 20, 60, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameTe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 70, 10);
+        ctx.fillRect(x + 40, y + 20, 20, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 20, 10);
+    }
+
+    const nameTo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 40, y + 20, 20, 10);
+        ctx.fillRect(x + 20, y + 30, 20, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 60, 10);
+    }
+
+    const nameNa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 40, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 30, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameNi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 10, 40, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 40, 10);
+    }
+
+    const nameNu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 30, 10);
+        ctx.fillRect(x + 10, y + 30, 20, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 20, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 30, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 20, 10);
+        ctx.fillRect(x + 70, y + 70, 10, 10);
+    }
+
+    const nameNe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 30, 10);
+        ctx.fillRect(x + 40, y + 20, 20, 10);
+        ctx.fillRect(x + 20, y + 30, 20, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 20, 10);
+        ctx.fillRect(x + 50, y + 50, 20, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 30, 10);
+    }
+
+    const nameNo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 30, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameHa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 50, y, 10, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 40, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 40, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 30, 10);
+    }
+
+    const nameHi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y, 40, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 20, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 30, 10);
+    }
+
+    const nameHu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 20, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameHe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+    }
+
+    const nameHo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y, 10, 10);
+        ctx.fillRect(x + 30, y, 40, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 40, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 30, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 20, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 30, 10);
+    }
+
+    const nameMa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 40, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 30, 10);
+    }
+
+    const nameMi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 40, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 60, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameMu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x, y + 10, 40, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 30, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameMe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 20, 10);
+        ctx.fillRect(x + 10, y + 30, 20, 10);
+        ctx.fillRect(x + 40, y + 30, 20, 10);
+        ctx.fillRect(x, y + 40, 20, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 20, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameMo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 50, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 50, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 30, 10);
+    }
+
+    const nameYa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 10, 10);
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 60, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 20, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+    }
+
+    const nameYu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 40, 10);
+        ctx.fillRect(x, y + 20, 20, 10);
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 30, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameYo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x + 40, y + 10, 30, 10);
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 30, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameRa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 20, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 30, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameRi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 10, 10);
+        ctx.fillRect(x + 50, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameRu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 50, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 20, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 20, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameRe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 30, 10);
+        ctx.fillRect(x + 40, y + 20, 20, 10);
+        ctx.fillRect(x + 20, y + 30, 20, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 20, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameRo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 50, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 40, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameWa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 30, 10);
+        ctx.fillRect(x + 40, y + 20, 20, 10);
+        ctx.fillRect(x + 20, y + 30, 20, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 20, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameWo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 40, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 20, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 20, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 30, 10);
+    }
+
+    const nameNn = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 30, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 20, 10);
+    }
+
+    const nameDA = (x, y) => { //左上指定(x+40,0)など
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+    }
+
+    const nameHD = (x, y) => { //左上指定(x+50,0)など
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y, 30, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 30, 10);
+    }
+
+    // const nameXA = (x,y) =>{
+    //     ctx.fillStyle = fontcolor;
+    //     ctx.fillRect(x+40,y,10,10);
+    // }
+
+    // const nameXI = (x,y) =>{
+    //     ctx.fillStyle = fontcolor;
+    //     ctx.fillRect(x+40,y,10,10);
+    // }
+
+    // const nameXU = (x,y) =>{
+    //     ctx.fillStyle = fontcolor;
+    //     ctx.fillRect(x+40,y,10,10);
+    // }
+
+    // const nameXE = (x,y) =>{
+    //     ctx.fillStyle = fontcolor;
+    //     ctx.fillRect(x+40,y,10,10);
+    // }
+
+    // const nameXO = (x,y) =>{
+    //     ctx.fillStyle = fontcolor;
+    //     ctx.fillRect(x+40,y,10,10);
+    // }
+
+    const nameXYa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 50, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 30, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameXYu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 30, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 30, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameXYo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 30, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 20, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameXTu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 30, 40, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameHyp = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 30, 70, 10);
+    }
+
+    const nameToten = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameKuten = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 40, 20, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameTen = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 20, 30, 30);
+    }
+
+    const nameQue = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 40, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 20, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+    }
+
+    const nameExc = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 60);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameBraBe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 20, 30, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 20);
+    }
+
+    const nameBraAf = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y + 20, 10, 20);
+        ctx.fillRect(x + 20, y + 40, 30, 10);
+    }
+
+    const nameAst = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 30, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+    }
+
+    const nameCln = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 20, 20);
+        ctx.fillRect(x + 20, y + 50, 20, 20);
+    }
+
+    const nameSan = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+    }
+
+    const nameJuji = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 20, 10);
+        ctx.fillRect(x + 30, y + 10, 20, 10);
+        ctx.fillRect(x + 10, y + 20, 60, 10);
+        ctx.fillRect(x + 10, y + 30, 60, 10);
+        ctx.fillRect(x + 30, y + 40, 20, 10);
+        ctx.fillRect(x + 30, y + 50, 20, 10);
+        ctx.fillRect(x + 30, y + 60, 20, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameAtDokuro = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 50, 10);
+        ctx.fillRect(x, y + 10, 70, 10);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 30, 10);
+        ctx.fillRect(x + 40, y + 50, 30, 10);
+        ctx.fillRect(x + 10, y + 60, 50, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameEnEx = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 40, 10);
+        ctx.fillRect(x, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 30, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 50, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameRight = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 40, y + 20, 20, 10);
+        ctx.fillRect(x, y + 30, 70, 10);
+        ctx.fillRect(x, y + 40, 80, 10);
+        ctx.fillRect(x, y + 50, 70, 10);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameLeft = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 20, 10);
+        ctx.fillRect(x + 10, y + 30, 70, 10);
+        ctx.fillRect(x, y + 40, 80, 10);
+        ctx.fillRect(x + 10, y + 50, 70, 10);
+        ctx.fillRect(x + 20, y + 60, 20, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameUp = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 30, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x, y + 40, 70, 10);
+        ctx.fillRect(x + 20, y + 50, 30, 10);
+        ctx.fillRect(x + 20, y + 60, 30, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameDown = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 30, 10);
+        ctx.fillRect(x + 20, y + 20, 30, 10);
+        ctx.fillRect(x + 20, y + 30, 30, 10);
+        ctx.fillRect(x, y + 40, 70, 10);
+        ctx.fillRect(x + 10, y + 50, 50, 10);
+        ctx.fillRect(x + 20, y + 60, 30, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameShita = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 20, y + 40, 30, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+    }
+
+    const nameMigi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 20, 10);
+        ctx.fillRect(x + 20, y + 30, 30, 10);
+        ctx.fillRect(x + 20, y + 40, 40, 10);
+        ctx.fillRect(x + 20, y + 50, 30, 10);
+        ctx.fillRect(x + 20, y + 60, 20, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+    }
+
+    const nameSquF = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 60, 60);
+    }
+
+    const nameSquS = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 60, 60);
+        ctx.clearRect(x + 20, y + 20, 40, 40);
+    }
+
+    const nameTatesen = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 10, 10, 70);
+    }
+
+    const nameFreC = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 20, 120);
+    }
+
+    const nameFreR = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x - 30, y + 60, 120, 20);
+    }
+
+    const nameFreUL = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 60, 90, 20);
+        ctx.fillRect(x + 30, y + 80, 20, 90);
+        ctx.fillRect(x + 50, y + 80, 10, 10);
+        ctx.clearRect(x + 30, y + 60, 10, 10);
+    }
+
+    const nameFreUR = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x - 30, y + 60, 80, 20);
+        ctx.fillRect(x + 30, y + 80, 20, 90);
+        ctx.fillRect(x + 20, y + 80, 10, 10);
+        ctx.clearRect(x + 40, y + 60, 10, 10);
+    }
+
+    const nameFreBL = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 60, 90, 20);
+        ctx.fillRect(x + 30, y, 20, 60);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.clearRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameFreBR = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x - 30, y + 60, 80, 20);
+        ctx.fillRect(x + 30, y, 20, 60);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.clearRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameFreCE = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 20, 120);
+        ctx.fillRect(x + 60, y + 50, 40, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 30, 10);
+        ctx.fillRect(x + 60, y + 80, 10, 10);
+        ctx.fillRect(x + 60, y + 90, 40, 10);
+    }
+
+    const nameSun = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 10);
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 30, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 10, y + 40, 50, 10);
+        ctx.fillRect(x + 20, y + 50, 30, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameStar = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 20);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 20, y + 40, 30, 10);
+        ctx.fillRect(x + 10, y + 50, 50, 10);
+        ctx.fillRect(x + 10, y + 60, 20, 10);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameMoon = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 30, 10);
+        ctx.fillRect(x + 20, y + 10, 30, 10);
+        ctx.fillRect(x + 30, y + 20, 30, 40);
+        ctx.fillRect(x + 20, y + 60, 30, 10);
+        ctx.fillRect(x + 10, y + 70, 30, 10);
+    }
+
+    const nameWater = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 20);
+        ctx.fillRect(x + 20, y + 20, 30, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x, y + 40, 70, 30);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameHeart = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 20, 10);
+        ctx.fillRect(x + 40, y + 10, 20, 10);
+        ctx.fillRect(x, y + 20, 70, 20);
+        ctx.fillRect(x + 10, y + 40, 50, 20);
+        ctx.fillRect(x + 20, y + 60, 30, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameOne = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 20, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameTwo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 40, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 20, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 60, 10);
+    }
+
+    const nameThree = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 60, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 20, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameFour = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 20, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 60, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameFive = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 60, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameSix = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 30, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameSeven = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 60, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameEight = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 40, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 20);
+        ctx.fillRect(x + 60, y + 10, 10, 20);
+        ctx.fillRect(x + 20, y + 30, 40, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 30);
+        ctx.fillRect(x + 60, y + 40, 10, 30);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameNine = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 40, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 30);
+        ctx.fillRect(x + 60, y + 10, 10, 30);
+        ctx.fillRect(x + 20, y + 40, 50, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameZero = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 40, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 60);
+        ctx.fillRect(x + 60, y + 10, 10, 60);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameEngA = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y + 10, 20, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 60, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngB = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 50, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameEngC = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 40, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameEngD = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 40, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 40, 10);
+    }
+
+    const nameEngE = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 40, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameEngF = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 40, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+    }
+
+    const nameEngG = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 40, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 30, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameEngH = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 60, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngI = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 30, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 50);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameEngJ = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 50, y + 10, 10, 60);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameEngK = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 20, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngL = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 60);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameEngM = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x, y + 20, 20, 10);
+        ctx.fillRect(x + 50, y + 20, 20, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngN = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 20, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 20, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngO = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 40, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 50);
+        ctx.fillRect(x + 60, y + 20, 10, 50);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameEngP = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 50, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+    }
+
+    const nameEngQ = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 40, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 50);
+        ctx.fillRect(x + 60, y + 20, 10, 50);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 60, 10);
+    }
+
+    const nameEngR = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 50, 10);
+        ctx.fillRect(x + 10, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngS = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 40, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 40, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameEngT = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 60);
+    }
+
+    const nameEngU = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 60);
+        ctx.fillRect(x + 60, y + 10, 10, 60);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameEngV = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 10, 20);
+        ctx.fillRect(x + 60, y + 10, 10, 20);
+        ctx.fillRect(x + 10, y + 30, 10, 20);
+        ctx.fillRect(x + 50, y + 30, 10, 20);
+        ctx.fillRect(x + 20, y + 50, 10, 20);
+        ctx.fillRect(x + 40, y + 50, 10, 20);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameEngW = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 10, 60);
+        ctx.fillRect(x + 60, y + 10, 10, 60);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 40);
+        ctx.fillRect(x + 40, y + 30, 10, 40);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameEngX = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameEngY = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 20);
+        ctx.fillRect(x + 50, y + 10, 10, 20);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 40);
+    }
+
+    const nameEngZ = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameKanaA = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y, 70, 10);
+        ctx.fillRect(x + 30, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 30);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+    }
+
+    const nameKanaI = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 60, y, 10, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 10);
+        ctx.fillRect(x + 40, y + 20, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 20, 10);
+        ctx.fillRect(x + 10, y + 40, 20, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameKanaU = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 20);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x, y + 30, 10, 20);
+        ctx.fillRect(x + 60, y + 30, 10, 30);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameKanaE = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 50, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 50);
+        ctx.fillRect(x, y + 70, 70, 10);
+    }
+
+    const nameKanaO = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y, 10, 70);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 30, y + 30, 20, 10);
+        ctx.fillRect(x + 20, y + 40, 10, 20);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameKanaKa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 50);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 40);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 50, y + 70, 10, 10);
+    }
+
+    const nameKanaKi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 80);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x, y + 40, 70, 10);
+    }
+
+    const nameKanaKu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 50, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaKe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 70, 10);
+        ctx.fillRect(x, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaKo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 60, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 50);
+        ctx.fillRect(x + 10, y + 70, 60, 10);
+    }
+
+    const nameKanaSa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 10, 50);
+        ctx.fillRect(x + 50, y, 10, 60);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaSi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 30, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 30, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 30, 10);
+    }
+
+    const nameKanaSu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 70, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 50, y + 20, 10, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 10, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 10, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameKanaSe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 10, 70);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 40, 10);
+    }
+
+    const nameKanaSo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 20);
+        ctx.fillRect(x + 60, y + 10, 10, 30);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 20);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaTa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 50, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 30, 20, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 20, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaTi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 50, y, 10, 10);
+        ctx.fillRect(x + 10, y + 10, 40, 10);
+        ctx.fillRect(x + 40, y + 10, 10, 50);
+        ctx.fillRect(x, y + 30, 70, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+    }
+
+    const nameKanaTu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 30);
+        ctx.fillRect(x + 30, y + 10, 10, 30);
+        ctx.fillRect(x + 60, y + 10, 10, 30);
+        ctx.fillRect(x + 50, y + 40, 10, 20);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaTe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 50, 10);
+        ctx.fillRect(x, y + 30, 70, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 20);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+    }
+
+    const nameKanaTo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 10, 70);
+        ctx.fillRect(x + 30, y + 40, 20, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+    }
+
+    const nameKanaNa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 40, y, 10, 50);
+        ctx.fillRect(x + 30, y + 50, 10, 20);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+    }
+
+    const nameKanaNi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 20, 50, 10);
+        ctx.fillRect(x, y + 70, 70, 10);
+    }
+
+    const nameKanaNu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 60, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameKanaNe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 20);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 20, 10);
+        ctx.fillRect(x + 10, y + 50, 30, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameKanaNo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 60, y, 10, 20);
+        ctx.fillRect(x + 50, y + 20, 10, 20);
+        ctx.fillRect(x + 40, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 20, y + 60, 10, 10);
+        ctx.fillRect(x, y + 70, 20, 10);
+    }
+
+    const nameKanaHa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 10, y + 20, 10, 30);
+        ctx.fillRect(x + 50, y + 20, 10, 20);
+        ctx.fillRect(x + 60, y + 40, 10, 30);
+        ctx.fillRect(x, y + 50, 10, 10);
+    }
+
+    const nameKanaHi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y, 10, 70);
+        ctx.fillRect(x + 30, y + 20, 30, 10);
+        ctx.fillRect(x + 10, y + 30, 30, 10);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameKanaHu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 60, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 20);
+        ctx.fillRect(x + 50, y + 40, 10, 20);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    const nameKanaHe = (x, y) => {
+        nameHe(x, y);
+    }
+
+    const nameKanaHo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 30, y, 10, 80);
+        ctx.fillRect(x, y + 20, 70, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 20);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x, y + 60, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 20);
+    }
+
+    const nameKanaMa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 70, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 20);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 20, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 10, 10);
+    }
+
+    const nameKanaMi = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y, 40, 10);
+        ctx.fillRect(x + 20, y + 30, 40, 10);
+        ctx.fillRect(x + 10, y + 60, 50, 10);
+        ctx.fillRect(x + 60, y + 70, 10, 10);
+    }
+
+    const nameKanaMu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 40, y + 10, 10, 10);
+        ctx.fillRect(x + 30, y + 20, 10, 10);
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x, y + 50, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 30);
+        ctx.fillRect(x, y + 60, 60, 10);
+    }
+
+    const nameKanaMe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 60, y, 10, 30);
+        ctx.fillRect(x + 30, y + 30, 10, 10);
+        ctx.fillRect(x + 40, y + 40, 10, 20);
+        ctx.fillRect(x + 50, y + 30, 10, 20);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 20, 10);
+    }
+
+    const nameKanaMo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 60, 10);
+        ctx.fillRect(x + 20, y + 20, 10, 50);
+        ctx.fillRect(x, y + 40, 70, 10);
+        ctx.fillRect(x + 20, y + 70, 50, 10);
+    }
+
+    const nameKanaYa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 10, 10);
+        ctx.fillRect(x + 20, y + 10, 10, 50);
+        ctx.fillRect(x, y + 20, 80, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 20);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+    }
+
+    const nameKanaYu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 20, 50, 10);
+        ctx.fillRect(x + 50, y + 30, 10, 40);
+        ctx.fillRect(x, y + 70, 80, 10);
+    }
+
+    const nameKanaYo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 40, 10);
+        ctx.fillRect(x + 50, y + 10, 10, 70);
+        ctx.fillRect(x + 10, y + 40, 40, 10);
+        ctx.fillRect(x + 10, y + 70, 40, 10);
+    }
+
+    const nameKanaRa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 50, 10);
+        ctx.fillRect(x + 10, y + 30, 70, 10);
+        ctx.fillRect(x + 70, y + 40, 10, 10);
+        ctx.fillRect(x + 60, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 20, 10);
+    }
+
+    const nameKanaRi = (x, y) => {
+        nameRi(x, y);
+    }
+
+    const nameKanaRu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 10, 10, 60);
+        ctx.fillRect(x + 40, y + 10, 10, 60);
+        ctx.fillRect(x + 70, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 10, 10);
+        ctx.fillRect(x + 40, y + 70, 30, 10);
+    }
+
+    const nameKanaRe = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 10, 70);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 20, 10);
+        ctx.fillRect(x + 20, y + 70, 10, 10);
+    }
+
+    const nameKanaRo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 10, 70, 70);
+        ctx.clearRect(x + 20, y + 20, 50, 50);
+    }
+
+    const nameKanaWa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x, y + 10, 70, 10);
+        ctx.fillRect(x, y + 20, 10, 20);
+        ctx.fillRect(x + 60, y + 20, 10, 40);
+        ctx.fillRect(x + 50, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 30, 10);
+    }
+
+    const nameKanaWo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y, 60, 10);
+        ctx.fillRect(x + 60, y + 10, 10, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+        ctx.fillRect(x + 50, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+        ctx.fillRect(x + 10, y + 30, 50, 10);
+    }
+
+    const nameKanaNn = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 20, 30, 10);
+        ctx.fillRect(x + 60, y + 20, 10, 10);
+        ctx.fillRect(x + 60, y + 30, 10, 10);
+        ctx.fillRect(x + 60, y + 40, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 40, y + 60, 10, 10);
+        ctx.fillRect(x + 10, y + 70, 30, 10);
+    }
+
+    const nameKanaXYa = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 30, 10, 10);
+        ctx.fillRect(x + 10, y + 40, 50, 10);
+        ctx.fillRect(x + 30, y + 50, 10, 10);
+        ctx.fillRect(x + 50, y + 50, 10, 10);
+        ctx.fillRect(x + 30, y + 60, 10, 10);
+        ctx.fillRect(x + 30, y + 70, 10, 10);
+    }
+
+    const nameKanaXYu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 20, y + 40, 30, 10);
+        ctx.fillRect(x + 40, y + 50, 10, 20);
+        ctx.fillRect(x + 10, y + 70, 50, 10);
+    }
+
+    const nameKanaXYo = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 30, 30, 10);
+        ctx.fillRect(x + 40, y + 30, 10, 50);
+        ctx.fillRect(x + 10, y + 50, 30, 10);
+        ctx.fillRect(x + 10, y + 70, 30, 10);
+    }
+
+    const nameKanaXTu = (x, y) => {
+        ctx.fillStyle = fontcolor;
+        ctx.fillRect(x + 10, y + 30, 10, 20);
+        ctx.fillRect(x + 30, y + 30, 10, 20);
+        ctx.fillRect(x + 50, y + 30, 10, 30);
+        ctx.fillRect(x + 40, y + 60, 20, 10);
+        ctx.fillRect(x + 20, y + 70, 20, 10);
+    }
+
+    //canvas表示
+    const displayText = (text, bai) => {
+
+        //設定反映
+        fontcolor = document.getElementById("fontC").value;
+        if (document.getElementById("waku").checked) { wakusen = true; }
+        else { wakusen = false; }
+        if (document.getElementById("tsume").checked) { mojitsume = -20; }
+        else { mojitsume = 0; }
+        if (document.getElementById("wakuW").checked) { flamecolor = "white" }
+        else { flamecolor = fontcolor }
+
+        padding_x = Number(document.getElementById("paddingLR").value);
+        padding_y = Number(document.getElementById("paddingTB").value);
+
+        let n = Array.from(text);
+        let c = 0;
+        let rc = 0;
+        let r = [];
+        if (n.length > 0) {
+            for (j = 0; j < n.length + 1; j++) {
+                if (n[j] === '\n') {
+                    c++;
+                    r.push(rc);
+                    rc = 0;
+                } else if (j === n.length) {
+                    r.push(rc);
+                } else {
+                    rc++;
+                }
+            }
+        }
+        let waku = 0;
+        if (wakusen) { waku = 50; }
+
+        // canvas.width = (Math.max.apply(null,r))*(120+mojitsume)+2*(padding_x+waku)-(50+mojitsume/2);
+        // canvas.height = (c+1)*120+2*(padding_y+waku)-10+padding_b;
+
+        let cwidth = (Math.max.apply(null, r)) * (120 + mojitsume) + 2 * (padding_x + waku) - (50 + mojitsume / 2);
+
+        let cheight = (c + 1) * 120 + 2 * (padding_y + waku) - 10 + padding_b;
+        canvas.width = cwidth * bai;
+        canvas.height = cheight * bai;
+
+        ctx.scale(bai, bai);
+
+        loopText(n);
+
+        //枠線を引く
+        if (wakusen) {
+            ctx.fillStyle = flamecolor;
+            ctx.fillRect(10, 10, cwidth - 20, 20);
+            ctx.fillRect(10, cheight - 30, cwidth - 20, 20);
+            ctx.fillRect(10, 30, 20, cheight - 40);
+            ctx.fillRect(cwidth - 30, 30, 20, cheight - 40);
+
+            ctx.fillRect(30, 30, 10, 10);
+            ctx.fillRect(cwidth - 40, 30, 10, 10);
+            ctx.fillRect(30, cheight - 40, 10, 10);
+            ctx.fillRect(cwidth - 40, cheight - 40, 10, 10);
+
+            ctx.clearRect(10, 10, 10, 10)
+            ctx.clearRect(cwidth - 20, 10, 10, 10)
+            ctx.clearRect(10, cheight - 20, 10, 10)
+            ctx.clearRect(cwidth - 20, cheight - 20, 10, 10)
+        }
+    }
+
+    //テキストひらがな
+    const loopTextHiragana = (moji, x, y) => {
+        if (moji === "あ") {
+            nameA(x, y + 30);
+        } else if (moji === "い") {
+            nameI(x, y + 30);
+        } else if (moji === "う") {
+            nameU(x, y + 30);
+        } else if (moji === "え") {
+            nameE(x, y + 30);
+        } else if (moji === "お") {
+            nameO(x, y + 30);
+        } else if (moji === "か") {
+            nameKa(x, y + 30);
+        } else if (moji === "き") {
+            nameKi(x, y + 30);
+        } else if (moji === "く") {
+            nameKu(x, y + 30);
+        } else if (moji === "け") {
+            nameKe(x, y + 30);
+        } else if (moji === "こ") {
+            nameKo(x, y + 30);
+        } else if (moji === "さ") {
+            nameSa(x, y + 30);
+        } else if (moji === "し") {
+            nameSi(x, y + 30);
+        } else if (moji === "す") {
+            nameSu(x, y + 30);
+        } else if (moji === "せ") {
+            nameSe(x, y + 30);
+        } else if (moji === "そ") {
+            nameSo(x, y + 30);
+        } else if (moji === "た") {
+            nameTa(x, y + 30);
+        } else if (moji === "ち") {
+            nameTi(x, y + 30);
+        } else if (moji === "つ") {
+            nameTu(x, y + 30);
+        } else if (moji === "て") {
+            nameTe(x, y + 30);
+        } else if (moji === "と") {
+            nameTo(x, y + 30);
+        } else if (moji === "な") {
+            nameNa(x, y + 30);
+        } else if (moji === "に") {
+            nameNi(x, y + 30);
+        } else if (moji === "ぬ") {
+            nameNu(x, y + 30);
+        } else if (moji === "ね") {
+            nameNe(x, y + 30);
+        } else if (moji === "の") {
+            nameNo(x, y + 30);
+        } else if (moji === "は") {
+            nameHa(x, y + 30);
+        } else if (moji === "ひ") {
+            nameHi(x, y + 30);
+        } else if (moji === "ふ") {
+            nameHu(x, y + 30);
+        } else if (moji === "へ") {
+            nameHe(x, y + 30);
+        } else if (moji === "ほ") {
+            nameHo(x, y + 30);
+        } else if (moji === "ま") {
+            nameMa(x, y + 30);
+        } else if (moji === "み") {
+            nameMi(x, y + 30);
+        } else if (moji === "む") {
+            nameMu(x, y + 30);
+        } else if (moji === "め") {
+            nameMe(x, y + 30);
+        } else if (moji === "も") {
+            nameMo(x, y + 30);
+        } else if (moji === "や") {
+            nameYa(x, y + 30);
+        } else if (moji === "ゆ") {
+            nameYu(x, y + 30);
+        } else if (moji === "よ") {
+            nameYo(x, y + 30);
+        } else if (moji === "ら") {
+            nameRa(x, y + 30);
+        } else if (moji === "り") {
+            nameRi(x, y + 30);
+        } else if (moji === "る") {
+            nameRu(x, y + 30);
+        } else if (moji === "れ") {
+            nameRe(x, y + 30);
+        } else if (moji === "ろ") {
+            nameRo(x, y + 30);
+        } else if (moji === "わ") {
+            nameWa(x, y + 30);
+        } else if (moji === "を") {
+            nameWo(x, y + 30);
+        } else if (moji === "ん") {
+            nameNn(x, y + 30);
+        } else if (moji === "が") {
+            nameKa(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぎ") {
+            nameKi(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぐ") {
+            nameKu(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "げ") {
+            nameKe(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ご") {
+            nameKo(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ざ") {
+            nameSa(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "じ") {
+            nameSi(x, y + 30);
+            nameDA(x + 40, y + 20);
+        } else if (moji === "ず") {
+            nameSu(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぜ") {
+            nameSe(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぞ") {
+            nameSo(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "だ") {
+            nameTa(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ぢ") {
+            nameTi(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "づ") {
+            nameTu(x, y + 30);
+            nameDA(x + 40, y + 20);
+        } else if (moji === "で") {
+            nameTe(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ど") {
+            nameTo(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ば") {
+            nameHa(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "び") {
+            nameHi(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぶ") {
+            nameHu(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "べ") {
+            nameHe(x, y + 30);
+            nameDA(x + 40, y + 20);
+        } else if (moji === "ぼ") {
+            nameHo(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぱ") {
+            nameHa(x, y + 30);
+            nameHD(x + 50, y + 10);
+        } else if (moji === "ぴ") {
+            nameHi(x, y + 30);
+            nameHD(x + 50, y);
+        } else if (moji === "ぷ") {
+            nameHu(x, y + 30);
+            nameHD(x + 50, y + 10);
+        } else if (moji === "ぺ") {
+            nameHe(x, y + 30);
+            nameHD(x + 50, y + 20);
+        } else if (moji === "ぽ") {
+            nameHo(x, y + 30);
+            nameHD(x + 50, y + 10);
+        } else if (moji === "ゔ") {
+            nameU(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ぁ") { //小文字作るならここを編集
+            nameA(x, y + 30);
+        } else if (moji === "ぃ") {
+            nameI(x, y + 30);
+        } else if (moji === "ぅ") {
+            nameU(x, y + 30);
+        } else if (moji === "ぇ") {
+            nameE(x, y + 30);
+        } else if (moji === "ぉ") {
+            nameO(x, y + 30);
+        } else if (moji === "ゃ") {
+            nameXYa(x - 20, y + 30);
+        } else if (moji === "ゅ") {
+            nameXYu(x - 20, y + 30);
+        } else if (moji === "ょ") {
+            nameXYo(x - 20, y + 30);
+        } else if (moji === "っ") {
+            nameXTu(x - 20, y + 30);
+        }
+    }
+
+    //テキストカタカナ
+    const loopTextKatakana = (moji, x, y) => {
+        if (moji === "ア") {
+            nameKanaA(x, y + 30);
+        } else if (moji === "イ") {
+            nameKanaI(x, y + 30);
+        } else if (moji === "ウ") {
+            nameKanaU(x, y + 30);
+        } else if (moji === "エ") {
+            nameKanaE(x, y + 30);
+        } else if (moji === "オ") {
+            nameKanaO(x, y + 30);
+        } else if (moji === "カ") {
+            nameKanaKa(x, y + 30);
+        } else if (moji === "キ") {
+            nameKanaKi(x, y + 30);
+        } else if (moji === "ク") {
+            nameKanaKu(x, y + 30);
+        } else if (moji === "ケ") {
+            nameKanaKe(x, y + 30);
+        } else if (moji === "コ") {
+            nameKanaKo(x, y + 30);
+        } else if (moji === "サ") {
+            nameKanaSa(x, y + 30);
+        } else if (moji === "シ") {
+            nameKanaSi(x, y + 30);
+        } else if (moji === "ス") {
+            nameKanaSu(x, y + 30);
+        } else if (moji === "セ") {
+            nameKanaSe(x, y + 30);
+        } else if (moji === "ソ") {
+            nameKanaSo(x, y + 30);
+        } else if (moji === "タ") {
+            nameKanaTa(x, y + 30);
+        } else if (moji === "チ") {
+            nameKanaTi(x, y + 30);
+        } else if (moji === "ツ") {
+            nameKanaTu(x, y + 30);
+        } else if (moji === "テ") {
+            nameKanaTe(x, y + 30);
+        } else if (moji === "ト") {
+            nameKanaTo(x, y + 30);
+        } else if (moji === "ナ") {
+            nameKanaNa(x, y + 30);
+        } else if (moji === "ニ") {
+            nameKanaNi(x, y + 30);
+        } else if (moji === "ヌ") {
+            nameKanaNu(x, y + 30);
+        } else if (moji === "ネ") {
+            nameKanaNe(x, y + 30);
+        } else if (moji === "ノ") {
+            nameKanaNo(x, y + 30);
+        } else if (moji === "ハ") {
+            nameKanaHa(x, y + 30);
+        } else if (moji === "ヒ") {
+            nameKanaHi(x, y + 30);
+        } else if (moji === "フ") {
+            nameKanaHu(x, y + 30);
+        } else if (moji === "ヘ") {
+            nameKanaHe(x, y + 30);
+        } else if (moji === "ホ") {
+            nameKanaHo(x, y + 30);
+        } else if (moji === "マ") {
+            nameKanaMa(x, y + 30);
+        } else if (moji === "ミ") {
+            nameKanaMi(x, y + 30);
+        } else if (moji === "ム") {
+            nameKanaMu(x, y + 30);
+        } else if (moji === "メ") {
+            nameKanaMe(x, y + 30);
+        } else if (moji === "モ") {
+            nameKanaMo(x, y + 30);
+        } else if (moji === "ヤ") {
+            nameKanaYa(x, y + 30);
+        } else if (moji === "ユ") {
+            nameKanaYu(x, y + 30);
+        } else if (moji === "ヨ") {
+            nameKanaYo(x, y + 30);
+        } else if (moji === "ラ") {
+            nameKanaRa(x, y + 30);
+        } else if (moji === "リ") {
+            nameKanaRi(x, y + 30);
+        } else if (moji === "ル") {
+            nameKanaRu(x, y + 30);
+        } else if (moji === "レ") {
+            nameKanaRe(x, y + 30);
+        } else if (moji === "ロ") {
+            nameKanaRo(x, y + 30);
+        } else if (moji === "ワ") {
+            nameKanaWa(x, y + 30);
+        } else if (moji === "ヲ") {
+            nameKanaWo(x, y + 30);
+        } else if (moji === "ン") {
+            nameKanaNn(x, y + 30);
+        } else if (moji === "ガ") {
+            nameKanaKa(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ギ") {
+            nameKanaKi(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "グ") {
+            nameKanaKu(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ゲ") {
+            nameKanaKe(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ゴ") {
+            nameKanaKo(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ザ") {
+            nameKanaSa(x, y + 30);
+            nameDA(x + 50, y);
+        } else if (moji === "ジ") {
+            nameKanaSi(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ズ") {
+            nameKanaSu(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ゼ") {
+            nameKanaSe(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ゾ") {
+            nameKanaSo(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ダ") {
+            nameKanaTa(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ヂ") {
+            nameKanaTi(x, y + 30);
+            nameDA(x + 50, y);
+        } else if (moji === "ヅ") {
+            nameKanaTu(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "デ") {
+            nameKanaTe(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ド") {
+            nameKanaTo(x, y + 30);
+            nameDA(x + 40, y + 20);
+        } else if (moji === "バ") {
+            nameKanaHa(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ビ") {
+            nameKanaHi(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ブ") {
+            nameKanaHu(x, y + 30);
+            nameDA(x + 40, y);
+        } else if (moji === "ベ") {
+            nameKanaHe(x, y + 30);
+            nameDA(x + 40, y + 20);
+        } else if (moji === "ボ") {
+            nameKanaHo(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "パ") {
+            nameKanaHa(x, y + 30);
+            nameHD(x + 40, y);
+        } else if (moji === "ピ") {
+            nameKanaHi(x, y + 30);
+            nameHD(x + 40, y);
+        } else if (moji === "プ") {
+            nameKanaHu(x, y + 30);
+            nameHD(x + 50, y);
+        } else if (moji === "ペ") {
+            nameKanaHe(x, y + 30);
+            nameHD(x + 50, y + 20);
+        } else if (moji === "ポ") {
+            nameKanaHo(x, y + 30);
+            nameHD(x + 50, y + 10);
+        } else if (moji === "ヴ") {
+            nameKanaU(x, y + 30);
+            nameDA(x + 40, y + 10);
+        } else if (moji === "ァ") {
+            nameKanaA(x, y + 30);
+        } else if (moji === "ィ") {
+            nameKanaI(x, y + 30);
+        } else if (moji === "ゥ") {
+            nameKanaU(x, y + 30);
+        } else if (moji === "ェ") {
+            nameKanaE(x, y + 30);
+        } else if (moji === "ォ") {
+            nameKanaO(x, y + 30);
+        } else if (moji === "ャ") {
+            nameKanaXYa(x - 20, y + 30);
+        } else if (moji === "ュ") {
+            nameKanaXYu(x - 20, y + 30);
+        } else if (moji === "ョ") {
+            nameKanaXYo(x - 20, y + 30);
+        } else if (moji === "ッ") {
+            nameKanaXTu(x - 20, y + 30);
+        }
+    }
+
+    //テキストアルファベット
+    const loopTextEnglish = (moji, x, y) => {
+        if (moji === "A" || moji === "Ａ") {
+            nameEngA(x, y + 30);
+        } else if (moji === "B" || moji === "Ｂ") {
+            nameEngB(x, y + 30);
+        } else if (moji === "C" || moji === "Ｃ") {
+            nameEngC(x, y + 30);
+        } else if (moji === "D" || moji === "Ｄ") {
+            nameEngD(x, y + 30);
+        } else if (moji === "E" || moji === "Ｅ") {
+            nameEngE(x, y + 30);
+        } else if (moji === "F" || moji === "Ｆ") {
+            nameEngF(x, y + 30);
+        } else if (moji === "G" || moji === "Ｇ") {
+            nameEngG(x, y + 30);
+        } else if (moji === "H" || moji === "Ｈ") {
+            nameEngH(x, y + 30);
+        } else if (moji === "I" || moji === "Ｉ") {
+            nameEngI(x, y + 30);
+        } else if (moji === "J" || moji === "Ｊ") {
+            nameEngJ(x, y + 30);
+        } else if (moji === "K" || moji === "Ｋ") {
+            nameEngK(x, y + 30);
+        } else if (moji === "L" || moji === "Ｌ") {
+            nameEngL(x, y + 30);
+        } else if (moji === "M" || moji === "Ｍ") {
+            nameEngM(x, y + 30);
+        } else if (moji === "N" || moji === "Ｎ") {
+            nameEngN(x, y + 30);
+        } else if (moji === "O" || moji === "Ｏ") {
+            nameEngO(x, y + 30);
+        } else if (moji === "P" || moji === "Ｐ") {
+            nameEngP(x, y + 30);
+        } else if (moji === "Q" || moji === "Ｑ") {
+            nameEngQ(x, y + 30);
+        } else if (moji === "R" || moji === "Ｒ") {
+            nameEngR(x, y + 30);
+        } else if (moji === "S" || moji === "Ｓ") {
+            nameEngS(x, y + 30);
+        } else if (moji === "T" || moji === "Ｔ") {
+            nameEngT(x, y + 30);
+        } else if (moji === "U" || moji === "Ｕ") {
+            nameEngU(x, y + 30);
+        } else if (moji === "V" || moji === "Ｖ") {
+            nameEngV(x, y + 30);
+        } else if (moji === "W" || moji === "Ｗ") {
+            nameEngW(x, y + 30);
+        } else if (moji === "X" || moji === "Ｘ") {
+            nameEngX(x, y + 30);
+        } else if (moji === "Y" || moji === "Ｙ") {
+            nameEngY(x, y + 30);
+        } else if (moji === "Z" || moji === "Ｚ") {
+            nameEngZ(x, y + 30);
+        }
+    }
+
+    //テキスト数字
+    const loopTextNumber = (moji, x, y) => {
+        if (moji === "１" || moji === "1") {
+            nameOne(x, y + 30);
+        } else if (moji === "２" || moji === "2") {
+            nameTwo(x, y + 30);
+        } else if (moji === "３" || moji === "3") {
+            nameThree(x, y + 30);
+        } else if (moji === "４" || moji === "4") {
+            nameFour(x, y + 30);
+        } else if (moji === "５" || moji === "5") {
+            nameFive(x, y + 30);
+        } else if (moji === "６" || moji === "6") {
+            nameSix(x, y + 30);
+        } else if (moji === "７" || moji === "7") {
+            nameSeven(x, y + 30);
+        } else if (moji === "８" || moji === "8") {
+            nameEight(x, y + 30);
+        } else if (moji === "９" || moji === "9") {
+            nameNine(x, y + 30);
+        } else if (moji === "０" || moji === "0") {
+            nameZero(x, y + 30);
+        }
+    }
+
+    //テキスト記号
+    const loopTextKigo = (moji, x, y) => {
+        if (moji === "ー" || moji === "―" || moji === "－") {
+            nameHyp(x, y + 30);
+        } else if (moji === "、") {
+            nameToten(x, y + 30);
+        } else if (moji === "。") {
+            nameKuten(x, y + 30);
+        } else if (moji === "・") {
+            nameTen(x, y + 30);
+        } else if (moji === "？") {
+            nameQue(x, y + 30);
+        } else if (moji === "！") {
+            nameExc(x, y + 30);
+        } else if (moji === "「") {
+            nameBraBe(x, y + 10);
+        } else if (moji === "」") {
+            nameBraAf(x, y + 50);
+        } else if (moji === "＊") {
+            nameAst(x, y + 30);
+        } else if (moji === "゛") {
+            nameDA(x, y + 10);
+        } else if (moji === "゜") {
+            nameHD(x, y + 10);
+        } else if (moji === "：") {
+            nameCln(x, y + 30);
+        } else if (moji === "…") {
+            nameSan(x, y + 30);
+        } else if (moji === "＋") {
+            nameJuji(x, y + 30);
+        } else if (moji === "＠") {
+            nameAtDokuro(x, y + 30);
+        } else if (moji === "￥") {
+            nameEnEx(x, y + 30);
+        } else if (moji === "→") {
+            nameRight(x, y + 30);
+        } else if (moji === "←") {
+            nameLeft(x, y + 30);
+        } else if (moji === "↑") {
+            nameUp(x, y + 30);
+        } else if (moji === "↓") {
+            nameDown(x, y + 30);
+        } else if (moji === "｛") {
+            nameShita(x, y + 30);
+        } else if (moji === "｝") {
+            nameMigi(x, y + 30);
+        } else if (moji === "■") {
+            nameSquF(x, y + 30);
+        } else if (moji === "□") {
+            nameSquS(x, y + 30);
+        } else if (moji === "｜") {
+            nameTatesen(x, y + 30);
+        } else if (moji === "│") {
+            nameFreC(x, y);
+        } else if (moji === "─" || moji === "━") {
+            nameFreR(x, y);
+        } else if (moji === "┌" || moji === "┏") {
+            nameFreUL(x, y);
+        } else if (moji === "┐" || moji === "┓") {
+            nameFreUR(x, y);
+        } else if (moji === "└" || moji === "┗") {
+            nameFreBL(x, y);
+        } else if (moji === "┘" || moji === "┛") {
+            nameFreBR(x, y);
+        } else if (moji === "┃") {
+            nameFreCE(x, y);
+        } else if (moji === "s") {
+            nameSun(x, y);
+        } else if (moji === "t") {
+            nameStar(x, y);
+        } else if (moji === "m" || moji === "o") {
+            nameMoon(x, y);
+        } else if (moji === "w") {
+            nameWater(x, y);
+        } else if (moji === "h" || moji === "l" || moji === "r") {
+            nameHeart(x, y);
+        }
+    }
+
+    //テキスト表示
+    const loopText = (n) => {
+        let waku = 0;
+        if (wakusen) { waku = 50; }
+        let x = padding_x + waku;
+        let y = padding_y + waku;
+        for (i = 0; i < n.length; i++) {
+            if (n[i] !== '\n') {
+                loopTextHiragana(n[i], x, y);
+                loopTextKatakana(n[i], x, y);
+                loopTextEnglish(n[i], x, y);
+                loopTextKigo(n[i], x, y);
+                loopTextNumber(n[i], x, y);
+                x = x + 120 + mojitsume;
+            } else {
+                x = padding_x + waku;
+                y = y + 120;
+            }
+        }
+    }
+
+    const filingMain = (e) => {
+        main_value = e.target.value;
+        bairitsu = Number(document.getElementById("sample").value);
+        displayText(main_value, bairitsu);
+        linkMake();
+    }
+
+
+    main.addEventListener("input", filingMain);
+    ////////// ここを変更//////////
+    // nameKanaXTu(10,10); //最終的に消す
+    ////////// ここを変更//////////
+
+    const onLinkClick = () => {
+        displayText(main_value, 1);
+        let test = document.createElement('a');
+        test.href = canvas.toDataURL("image/jpeg");
+        test.download = 'draquefu.jpg';
+        test.click();
+        bairitsu = Number(document.getElementById("sample").value);
+        displayText(main_value, bairitsu);
+    }
+
+
+    const linkMake = () => {
+        let x = document.querySelector("h3")
+        while (x.lastChild) {
+            x.removeChild(x.lastChild)
+        }
+        let link = document.createElement('a');
+        link.href = "javascript:onLinkClick();"
+        // link.href = canvas.toDataURL("image/jpeg");
+        // link.download = 'draquefu.jpg';
+        link.textContent = "ダウンロード(JPG)"
+        if (main_value !== "") {
+            document.querySelector("h3").appendChild(link);
+        }
+    }
+
+
+
+</script>
+
+</html>

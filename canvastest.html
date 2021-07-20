@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動くマリオ</title>
+    <style>
+        #mario,#mario2,#mario3{
+            display: block;
+            /* background-color: aliceblue; */
+            margin: 10px auto 0 auto;
+        }
+        h1,p{
+            margin: 0 auto 0 auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>動くドット絵</h1>
+    <canvas id="mario" width="160" height="160"></canvas>
+    <p>左右を押すとドット絵が動くだけ</p>
+    <!-- <canvas id="mario2" width="160" height="160"></canvas>
+    <canvas id="mario3" width="160" height="160"></canvas> -->
+    
+    
+</body>
+<script>
+
+    let ctx = document.getElementById("mario").getContext('2d');
+    // let ctx2 = document.getElementById("mario2").getContext('2d');
+    // let ctx3 = document.getElementById("mario3").getContext('2d');
+    let mario_state = 0; //0で立ち、1で歩き1、2で歩き2
+    let mario_direction = 1; //1で右向き、-1で左向き
+    let loop = null;
+    let move = false;
+    
+    const paint1_red = [
+    [50,0,50,10],
+    [40,10,90,10],
+    [60,70,10,10],
+    [60,80,10,10],
+    [90,80,10,10],
+    [60,90,40,10],
+    [50,100,10,10],
+    [70,100,20,10],
+    [100,100,10,10],
+    [50,110,60,10],
+    [40,120,80,10],
+    [40,130,30,10],
+    [90,130,30,10]
+    ]
+    const paint1_orange = [
+    [70,20,20,10],
+    [100,20,10,10],
+    [40,30,10,10],
+    [60,30,30,10],
+    [100,30,30,10],
+    [40,40,10,10],
+    [70,40,30,10],
+    [110,40,30,10],
+    [50,50,40,10],
+    [50,60,70,10],
+    [20,100,20,10],
+    [60,100,10,10],
+    [90,100,10,10],
+    [120,100,20,10],
+    [20,110,30,10],
+    [110,110,30,10],
+    [20,120,20,10],
+    [120,120,20,10],
+    ]
+    const paint1_olive = [
+    [40,20,30,10],
+    [90,20,10,10],
+    [30,30,10,10],
+    [50,30,10,10],
+    [90,30,10,10],
+    [30,40,10,10],
+    [50,40,20,10],
+    [100,40,10,10],
+    [30,50,20,10],
+    [90,50,40,10],
+    [40,70,20,10],
+    [70,70,30,10],
+    [30,80,30,10],
+    [70,80,20,10],
+    [100,80,30,10],
+    [20,90,40,10],
+    [100,90,40,10],
+    [40,100,10,10],
+    [110,100,10,10],
+    [30,140,30,10],
+    [100,140,30,10],
+    [20,150,40,10],
+    [100,150,40,10]
+    ]
+
+    const paint2_red = [
+    [60,10,50,10],
+    [50,20,90,10],
+    [90,80,10,10],
+    [50,100,10,10],
+    [50,110,70,10],
+    [40,120,80,10],
+    [40,130,30,10],
+    [80,130,30,10]
+    ]
+    const paint2_orange = [
+    [80,30,20,10],
+    [110,30,10,10],
+    [50,40,10,10],
+    [70,40,30,10],
+    [110,40,30,10],
+    [50,50,10,10],
+    [80,50,30,10],
+    [120,50,30,10],
+    [60,60,40,10],
+    [60,70,70,10],
+    [120,80,10,10],
+    [40,90,10,10],
+    [110,90,30,10],
+    [30,100,20,10],
+    [110,100,20,10]
+    ]
+    const paint2_olive = [
+    [50,30,30,10],
+    [100,30,10,10],
+    [40,40,10,10],
+    [60,40,10,10],
+    [100,40,10,10],
+    [40,50,10,10],
+    [60,50,20,10],
+    [110,50,10,10],
+    [40,60,20,10],
+    [100,60,40,10],
+    [50,80,40,10],
+    [100,80,10,10],
+    [50,90,60,10],
+    [60,100,50,10],
+    [30,110,20,10],
+    [30,120,10,10],
+    [20,130,20,10],
+    [20,140,10,10],
+    [70,140,30,10],
+    [70,150,40,10]
+    ]
+
+    const paint3_red = [
+    [40,0,50,10],
+    [30,10,90,10],
+    [50,70,10,10],
+    [60,80,20,10],
+    [50,90,20,10],
+    [80,90,20,10],
+    [60,100,50,10],
+    [20,110,10,10],
+    [80,110,30,10],
+    [30,120,10,10],
+    [70,120,30,10],
+    [40,130,30,10]
+    ]
+    const paint3_orange = [
+    [60,20,20,10],
+    [90,20,10,10],
+    [30,30,10,10],
+    [50,30,30,10],
+    [90,30,30,10],
+    [30,40,10,10],
+    [60,40,30,10],
+    [100,40,30,10],
+    [40,50,40,10],
+    [40,60,70,10],
+    [70,90,10,10],
+    [100,90,10,10],
+    [50,110,30,10],
+    [50,120,20,10]
+    ]
+    const paint3_olive = [
+    [30,20,30,10],
+    [80,20,10,10],
+    [20,30,10,10],
+    [40,30,10,10],
+    [80,30,10,10],
+    [20,40,10,10],
+    [40,40,20,10],
+    [90,40,10,10],
+    [20,50,20,10],
+    [80,50,40,10],
+    [30,70,20,10],
+    [60,70,30,10],
+    [20,80,40,10],
+    [80,80,20,10],
+    [20,90,30,10],
+    [20,100,40,10],
+    [30,110,20,10],
+    [40,120,10,10],
+    [70,130,30,10],
+    [40,140,70,10],
+    [40,150,40,10],
+    ]
+
+    //右向き立ちを描画
+    const standRight = (id) => {
+        clearAll(id);
+        mario_state = 0;
+        mario_direction = 1;
+        const ctx = document.getElementById(id).getContext('2d');
+        // ctx.clearRect(0,0,160,160)
+        ctx.fillStyle = "red"
+        for(i=0;i<paint1_red.length;i++){
+            ctx.fillRect(paint1_red[i][0],paint1_red[i][1],paint1_red[i][2],paint1_red[i][3])
+        }
+        ctx.fillStyle = "orange"
+        for(i=0;i<paint1_orange.length;i++){
+            ctx.fillRect(paint1_orange[i][0],paint1_orange[i][1],paint1_orange[i][2],paint1_orange[i][3])
+        }
+        ctx.fillStyle = "olive"
+        for(i=0;i<paint1_olive.length;i++){
+            ctx.fillRect(paint1_olive[i][0],paint1_olive[i][1],paint1_olive[i][2],paint1_olive[i][3])
+        }
+    }
+
+    //左向き立ちを描画
+    const standLeft = (id) =>{
+        clearAll(id);
+        mario_state = 0;
+        mario_direction = -1;
+        const ctx = document.getElementById(id).getContext('2d');
+        ctx.fillStyle = "red"
+        for(i=0;i<paint1_red.length;i++){
+            ctx.fillRect(160-paint1_red[i][2]-paint1_red[i][0],paint1_red[i][1],paint1_red[i][2],paint1_red[i][3])
+        }
+        ctx.fillStyle = "orange"
+        for(i=0;i<paint1_orange.length;i++){
+            ctx.fillRect(160-paint1_orange[i][2]-paint1_orange[i][0],paint1_orange[i][1],paint1_orange[i][2],paint1_orange[i][3])
+        }
+        ctx.fillStyle = "olive"
+        for(i=0;i<paint1_olive.length;i++){
+            ctx.fillRect(160-paint1_olive[i][2]-paint1_olive[i][0],paint1_olive[i][1],paint1_olive[i][2],paint1_olive[i][3])
+        }
+    }
+
+    //右向き歩き1を描画
+    const runRight1 = (id) =>{
+        const ctx = document.getElementById(id).getContext('2d');
+        clearAll(id);
+        console.log("test")
+        mario_state = 1;
+        mario_direction = 1;
+        ctx.fillStyle = "red"
+        for(i=0;i<paint2_red.length;i++){
+            ctx.fillRect(paint2_red[i][0],paint2_red[i][1],paint2_red[i][2],paint2_red[i][3])
+        }
+        ctx.fillStyle = "orange"
+        for(i=0;i<paint2_orange.length;i++){
+            ctx.fillRect(paint2_orange[i][0],paint2_orange[i][1],paint2_orange[i][2],paint2_orange[i][3])
+        }
+        ctx.fillStyle = "olive"
+        for(i=0;i<paint2_olive.length;i++){
+            ctx.fillRect(paint2_olive[i][0],paint2_olive[i][1],paint2_olive[i][2],paint2_olive[i][3])
+        }
+    }
+
+    //左向き歩き1を描画
+    const runLeft1 = (id) =>{
+        const ctx = document.getElementById(id).getContext('2d');
+        clearAll(id);
+        mario_state = 1;
+        mario_direction = -1;
+        ctx.fillStyle = "red"
+        for(i=0;i<paint2_red.length;i++){
+            ctx.fillRect(160-paint2_red[i][2]-paint2_red[i][0],paint2_red[i][1],paint2_red[i][2],paint2_red[i][3])
+        }
+        ctx.fillStyle = "orange"
+        for(i=0;i<paint2_orange.length;i++){
+            ctx.fillRect(160-paint2_orange[i][2]-paint2_orange[i][0],paint2_orange[i][1],paint2_orange[i][2],paint2_orange[i][3])
+        }
+        ctx.fillStyle = "olive"
+        for(i=0;i<paint2_olive.length;i++){
+            ctx.fillRect(160-paint2_olive[i][2]-paint2_olive[i][0],paint2_olive[i][1],paint2_olive[i][2],paint2_olive[i][3])
+        }
+    }
+
+    //右向き歩き2を描画
+    const runRight2 = (id) =>{
+        const ctx = document.getElementById(id).getContext('2d');
+        clearAll(id);
+        mario_state = 2;
+        mario_direction = 1;
+        ctx.fillStyle = "red"
+        for(i=0;i<paint3_red.length;i++){
+            ctx.fillRect(paint3_red[i][0],paint3_red[i][1],paint3_red[i][2],paint3_red[i][3])
+        }
+        ctx.fillStyle = "orange"
+        for(i=0;i<paint3_orange.length;i++){
+            ctx.fillRect(paint3_orange[i][0],paint3_orange[i][1],paint3_orange[i][2],paint3_orange[i][3])
+        }
+        ctx.fillStyle = "olive"
+        for(i=0;i<paint3_olive.length;i++){
+            ctx.fillRect(paint3_olive[i][0],paint3_olive[i][1],paint3_olive[i][2],paint3_olive[i][3])
+        }
+    }
+
+    //左向き歩き2を描画
+    const runLeft2 = (id) =>{
+        const ctx = document.getElementById(id).getContext('2d');
+        clearAll(id);
+        mario_state = 2;
+        mario_direction = -1;
+        ctx.fillStyle = "red"
+        for(i=0;i<paint3_red.length;i++){
+            ctx.fillRect(160-paint3_red[i][2]-paint3_red[i][0],paint3_red[i][1],paint3_red[i][2],paint3_red[i][3])
+        }
+        ctx.fillStyle = "orange"
+        for(i=0;i<paint3_orange.length;i++){
+            ctx.fillRect(160-paint3_orange[i][2]-paint3_orange[i][0],paint3_orange[i][1],paint3_orange[i][2],paint3_orange[i][3])
+        }
+        ctx.fillStyle = "olive"
+        for(i=0;i<paint3_olive.length;i++){
+            ctx.fillRect(160-paint3_olive[i][2]-paint3_olive[i][0],paint3_olive[i][1],paint3_olive[i][2],paint3_olive[i][3])
+        }
+    }
+
+    //画面の全消去
+    const clearAll = (id) =>{
+        const ctx = document.getElementById(id).getContext('2d');
+        ctx.clearRect(0,0,160,160);
+    }
+
+
+    //右を押された処理
+    const runawayRight = (id) =>{
+        if(mario_state === 1){
+            runRight2(id);
+        }else{
+            runRight1(id);
+        }
+    }
+
+    //左を押された処理
+    const runawayLeft = (id) =>{
+        if(mario_state === 1){
+            runLeft2(id);
+        }else{
+            runLeft1(id);
+        }
+    }
+
+    //右を押し続ける処理
+    const runPressRight = (id) =>{
+        if(!move){
+            move = true;
+            loop = setInterval("runawayRight('mario')",1000/10);
+        }
+    }
+
+    //左を押し続ける処理
+    const runPressLeft = (id) =>{
+        if(!move){
+            move = true;
+            loop = setInterval("runawayLeft('mario')",1000/10);
+        }
+    }
+
+    //ボタンを押した処理
+    const moveDown = () =>{
+        document.addEventListener("keydown",keyDown)
+    }
+
+    //ボタンを離した処理
+    const moveUp = () =>{
+        document.addEventListener("keyup",keyUp)
+    }
+
+    const keyDown= (e) =>{
+        if(e.keyCode === "38"){
+            console.log("↑を押した");
+        }else if(e.keyCode === 40){
+            console.log("↓を押した");
+        }else if(e.keyCode === 37){
+            console.log("←を押した");
+            runPressLeft("mario");
+        }else if(e.keyCode === 39){
+            console.log("→を押した");
+            runPressRight("mario");
+        }
+    }
+
+    const keyUp = (e) =>{
+        if(e.keyCode === 37){
+            console.log("←を離した");
+            move = false;
+            clearInterval(loop);
+            standLeft("mario");
+        }else if(e.keyCode === 39){
+            console.log("→を離した");
+            move = false;
+            clearInterval(loop);
+            standRight("mario");
+        }
+    }
+
+    standRight("mario");
+    moveDown();
+    moveUp();
+
+
+    // clearAll("mario2");
+    // ctx2.fillStyle = "red";
+    // ctx2.fillRect(60,10,50,10);
+    // ctx2.fillRect(50,20,90,10);
+    // ctx2.fillRect(90,80,10,10);
+    // ctx2.fillRect(50,100,10,10);
+    // ctx2.fillRect(50,110,70,10);
+    // ctx2.fillRect(40,120,80,10);
+    // ctx2.fillRect(40,130,30,10);
+    // ctx2.fillRect(80,130,30,10);
+    
+    // ctx2.fillStyle = "orange";
+    // ctx2.fillRect(80,30,20,10);
+    // ctx2.fillRect(110,30,10,10);
+    // ctx2.fillRect(50,40,10,10);
+    // ctx2.fillRect(70,40,30,10);
+    // ctx2.fillRect(110,40,30,10);
+    // ctx2.fillRect(50,50,10,10);
+    // ctx2.fillRect(80,50,30,10);
+    // ctx2.fillRect(120,50,30,10);
+    // ctx2.fillRect(60,60,40,10);
+    // ctx2.fillRect(60,70,70,10);
+    // ctx2.fillRect(120,80,10,10);
+    // ctx2.fillRect(40,90,10,10);
+    // ctx2.fillRect(110,90,30,10);
+    // ctx2.fillRect(30,100,20,10);
+    // ctx2.fillRect(110,100,20,10);
+
+    // ctx2.fillStyle = "olive";
+    // ctx2.fillRect(50,30,30,10);
+    // ctx2.fillRect(100,30,10,10);
+    // ctx2.fillRect(40,40,10,10);
+    // ctx2.fillRect(60,40,10,10);
+    // ctx2.fillRect(100,40,10,10);
+    // ctx2.fillRect(40,50,10,10);
+    // ctx2.fillRect(60,50,20,10);
+    // ctx2.fillRect(110,50,10,10);
+    // ctx2.fillRect(40,60,20,10);
+    // ctx2.fillRect(100,60,40,10);
+    // ctx2.fillRect(50,80,40,10);
+    // ctx2.fillRect(100,80,10,10);
+    // ctx2.fillRect(50,90,60,10);
+    // ctx2.fillRect(60,100,50,10);
+    // ctx2.fillRect(30,110,20,10);
+    // ctx2.fillRect(30,120,10,10);
+    // ctx2.fillRect(20,130,20,10);
+    // ctx2.fillRect(20,140,10,10);
+    // ctx2.fillRect(70,140,30,10);
+    // ctx2.fillRect(70,150,40,10);
+
+
+    // clearAll("mario3");
+    // ctx3.fillStyle = "red";
+    // ctx3.fillRect(40,0,50,10);
+    // ctx3.fillRect(30,10,90,10);
+    // ctx3.fillRect(50,70,10,10);
+    // ctx3.fillRect(60,80,20,10);
+    // ctx3.fillRect(50,90,20,10);
+    // ctx3.fillRect(80,90,20,10);
+    // ctx3.fillRect(60,100,50,10);
+    // ctx3.fillRect(20,110,10,10);
+    // ctx3.fillRect(80,110,30,10);
+    // ctx3.fillRect(30,120,10,10);
+    // ctx3.fillRect(70,120,30,10);
+    // ctx3.fillRect(40,130,30,10);
+
+    // ctx3.fillStyle = "orange";
+    // ctx3.fillRect(60,20,20,10);
+    // ctx3.fillRect(90,20,10,10);
+    // ctx3.fillRect(30,30,10,10);
+    // ctx3.fillRect(50,30,30,10);
+    // ctx3.fillRect(90,30,30,10);
+    // ctx3.fillRect(30,40,10,10);
+    // ctx3.fillRect(60,40,30,10);
+    // ctx3.fillRect(100,40,30,10);
+    // ctx3.fillRect(40,50,40,10);
+    // ctx3.fillRect(40,60,70,10);
+    // ctx3.fillRect(70,90,10,10);
+    // ctx3.fillRect(100,90,10,10);
+    // ctx3.fillRect(50,110,30,10);
+    // ctx3.fillRect(50,120,20,10);
+    
+    // ctx3.fillStyle = "olive";
+    // ctx3.fillRect(30,20,30,10);
+    // ctx3.fillRect(80,20,10,10);
+    // ctx3.fillRect(20,30,10,10);
+    // ctx3.fillRect(40,30,10,10);
+    // ctx3.fillRect(80,30,10,10);
+    // ctx3.fillRect(20,40,10,10);
+    // ctx3.fillRect(40,40,20,10);
+    // ctx3.fillRect(90,40,10,10);
+    // ctx3.fillRect(20,50,20,10);
+    // ctx3.fillRect(80,50,40,10);
+    // ctx3.fillRect(30,70,20,10);
+    // ctx3.fillRect(60,70,30,10);
+    // ctx3.fillRect(20,80,40,10);
+    // ctx3.fillRect(80,80,20,10);
+    // ctx3.fillRect(20,90,30,10);
+    // ctx3.fillRect(20,100,40,10);
+    // ctx3.fillRect(30,110,20,10);
+    // ctx3.fillRect(40,120,10,10);
+    // ctx3.fillRect(70,130,30,10);
+    // ctx3.fillRect(40,140,70,10);
+    // ctx3.fillRect(40,150,40,10);
+
+
+
+    // ctx.fillStyle = "red"
+    // ctx.fillRect(50,0,50,10);
+    // ctx.fillRect(40,10,90,10);
+    // ctx.fillRect(60,70,10,10);
+    // ctx.fillRect(60,80,10,10);
+    // ctx.fillRect(90,80,10,10);
+    // ctx.fillRect(60,90,40,10);
+    // ctx.fillRect(50,100,10,10);
+    // ctx.fillRect(70,100,20,10);
+    // ctx.fillRect(100,100,10,10);
+    // ctx.fillRect(50,110,60,10);
+    // ctx.fillRect(40,120,80,10);
+    // ctx.fillRect(40,130,30,10);
+    // ctx.fillRect(90,130,30,10);
+    
+    // ctx.fillStyle = "orange"
+    // ctx.fillRect(70,20,20,10)
+    // ctx.fillRect(100,20,10,10)
+    // ctx.fillRect(40,30,10,10)
+    // ctx.fillRect(60,30,30,10)
+    // ctx.fillRect(100,30,30,10)
+    // ctx.fillRect(40,40,10,10)
+    // ctx.fillRect(70,40,30,10)
+    // ctx.fillRect(110,40,30,10)
+    // ctx.fillRect(50,50,40,10)
+    // ctx.fillRect(50,60,70,10)
+    // ctx.fillRect(20,100,20,10)
+    // ctx.fillRect(60,100,10,10)
+    // ctx.fillRect(90,100,10,10)
+    // ctx.fillRect(120,100,20,10)
+    // ctx.fillRect(20,110,30,10)
+    // ctx.fillRect(110,110,30,10)
+    // ctx.fillRect(20,120,20,10)
+    // ctx.fillRect(120,120,20,10)
+
+    // ctx.fillStyle = "olive"
+    // ctx.fillRect(40,20,30,10)
+    // ctx.fillRect(90,20,10,10)
+    // ctx.fillRect(30,30,10,10)
+    // ctx.fillRect(50,30,10,10)
+    // ctx.fillRect(90,30,10,10)
+    // ctx.fillRect(30,40,10,10)
+    // ctx.fillRect(50,40,20,10)
+    // ctx.fillRect(100,40,10,10)
+    // ctx.fillRect(30,50,20,10)
+    // ctx.fillRect(90,50,40,10)
+    // ctx.fillRect(40,70,20,10)
+    // ctx.fillRect(70,70,30,10)
+    // ctx.fillRect(30,80,30,10)
+    // ctx.fillRect(70,80,20,10)
+    // ctx.fillRect(100,80,30,10)
+    // ctx.fillRect(20,90,40,10)
+    // ctx.fillRect(100,90,40,10)
+    // ctx.fillRect(40,100,10,10)
+    // ctx.fillRect(110,100,10,10)
+    // ctx.fillRect(30,140,30,10)
+    // ctx.fillRect(100,140,30,10)
+    // ctx.fillRect(20,150,40,10)
+    // ctx.fillRect(100,150,40,10)
+
+    // ctx.clearRect(0,0,160,160)
+    
+    
+    // ctx2.fillStyle = "red"
+    // for(i=0;i<paint1_red.length;i++){
+    //         ctx2.fillRect(paint1_red[i][0],paint1_red[i][1],paint1_red[i][2],paint1_red[i][3])
+    // }
+    // ctx2.fillStyle = "orange"
+    // for(i=0;i<paint1_orange.length;i++){
+    //         ctx2.fillRect(paint1_orange[i][0],paint1_orange[i][1],paint1_orange[i][2],paint1_orange[i][3])
+    // }
+    // ctx2.fillStyle = "olive"
+    // for(i=0;i<paint1_olive.length;i++){
+    //         ctx2.fillRect(paint1_olive[i][0],paint1_olive[i][1],paint1_olive[i][2],paint1_olive[i][3])
+    // }
+
+
+    // ctx3.fillStyle = "red"
+    // for(i=0;i<paint1_red.length;i++){
+    //         ctx3.fillRect(160-paint1_red[i][2]-paint1_red[i][0],paint1_red[i][1],paint1_red[i][2],paint1_red[i][3])
+    // }
+    // ctx3.fillStyle = "orange"
+    // for(i=0;i<paint1_orange.length;i++){
+    //         ctx3.fillRect(160-paint1_orange[i][2]-paint1_orange[i][0],paint1_orange[i][1],paint1_orange[i][2],paint1_orange[i][3])
+    // }
+    // ctx3.fillStyle = "olive"
+    // for(i=0;i<paint1_olive.length;i++){
+    //         ctx3.fillRect(160-paint1_olive[i][2]-paint1_olive[i][0],paint1_olive[i][1],paint1_olive[i][2],paint1_olive[i][3])
+    // }
+
+
+
+
+
+</script>
+</html>

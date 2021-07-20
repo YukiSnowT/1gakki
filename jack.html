@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ブラックジャック ～ Black Jack</title>
+    <style>
+        h1{
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        h2{
+            background-color: wheat;
+            margin: 10px;
+            padding: 5px;
+            border: 1px solid;
+            width: 120px;
+            height: 30px;
+            text-align: center;
+        }
+        h3{
+            margin: 0 0 5px 20px;
+        }
+        #field{
+            background: linear-gradient(green,yellowgreen);
+            border: 1px solid ;
+            width: 900px;
+            height: 600px;
+        }
+        #dealer_card,#player_card{
+            display: flex;
+        }
+        #dealer_card{
+            margin-bottom: 10px;
+        }
+        #dealer_sum,#player_sum{
+            background-color: aliceblue;
+            border: 1px solid black;
+            padding-left: 5px;
+            width: 250px;
+            margin: 10px 0 10px 10px;
+            font-size: 1.4em;
+        }
+        #button,#player_name{
+            display: flex;
+        }
+        #hit,#stand,#doubledown{
+            width: 150px;
+            height: 37px;
+            text-align: center;
+            padding-top: 5px;
+            font-size: 1.5em;
+            margin: 10px 40px 0 50px;
+            border: 3px outset;
+            background-color: thistle;
+        }
+        .retry{
+            background-color: orange !important;
+        }
+        #result{
+            color: red;
+            margin-left: 10px;
+            font-size: 2.5em;
+            font-weight: bold;
+            font-style: italic;
+            padding: 3px 5px 0 5px;
+            height: 60px;
+        }
+        #hit:active,#stand:active,#doubledown:active{
+            border: 3px inset;
+        }
+        .card,.card_b{
+            border: 2px solid black;
+            border-radius: 10px;
+            width: 100px;
+            height: 95px;
+            margin: 0 5px 0 10px;
+            text-align: center;
+            padding-top: 45px;
+        }
+        .card{
+            background-color: white;
+            font-size: 2em;
+        }
+        .card_b{
+            background: linear-gradient(315deg,darkcyan,aquamarine);
+            font-size: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="title">
+        <h1>ブラックジャック</h1>
+        <h3 id="record">0 勝　0 敗　0 分</h3></div>
+    <div id="field">
+        <div id="dealer">
+            <h2>ディーラー</h2>
+            <div id="dealer_card">
+                <!-- ここにディーラーのカードを表示 -->
+            </div>
+            <div id="dealer_sum"></div>
+        </div>
+        <div id="player">
+            <div id="player_name">
+                <h2>プレイヤー</h2>
+                <div id="result"></div>
+            </div>
+            <div id="player_card">
+                <!-- ここにプレイヤーのカードを表示 -->
+            </div>
+        </div>
+        <div id="player_sum">プレイヤーの合計：</div>
+        <div id="button">
+            <div id="hit">ヒット</div>
+            <!-- <div id="stand">スタンド</div> -->
+        </div>
+    </div>
+    
+</body>
+<script>
+
+    //グローバル変数の定義
+    let dealer_text = [];
+    let player_text = [];
+    let deck = [];
+    let result = false;
+    let count_win = 0;
+    let count_push = 0;
+    let count_lose = 0;
+    let doubledown = 0;
+    let money = 1000;
+    
+
+    //デッキの用意
+    const setDeck = () => {
+        for(i=1;i<14;i++){
+            for(j=0;j<4;j++){
+                let n = "♡" + i;
+                if(j===1){n = "♣"+ i}
+                else if(j===2){n = "♢"+ i}
+                else if(j===3){n = "♠"+ i}
+                deck.push(n);
+            }
+        }
+    }
+
+    //デッキからランダムな数字（テキスト）を取り出す
+    const getDeck = (text) =>{
+        const num = deck.splice(Math.floor(Math.random() * deck.length),1);
+        text.push(num[0]);
+        return num[0];
+    }
+
+    //ディーラーカードのセット,frontは裏の時のみfalse
+    const setCardD = (cardtext,idnum,front) => {
+        const n = document.createElement("div");
+        n.setAttribute("id", idnum)
+        n.setAttribute("class", "card")
+        n.textContent = cardtext;
+        if(!front){
+            n.setAttribute("class", "card_b")
+        }
+        document.querySelector("#dealer_card").appendChild(n);
+    };
+
+    //プレイヤーカードのセット
+    const setCardP = (cardtext,idnum) => {
+        const n = document.createElement("div");
+        n.setAttribute("id", idnum)
+        n.setAttribute("class", "card")
+        n.textContent = cardtext;
+        document.querySelector("#player_card").appendChild(n);
+    };
+
+    //合計数
+    const setSum = (text) => {
+        let sum = 0;
+        let A = 0;
+        for(i=0;i<text.length;i++){
+            let n = parseInt(text[i].slice(1));
+            if(n >10){
+                n = 10;
+            }else if(n === 1){
+                n = 11;
+                A++;
+            }
+            sum = sum + n;
+        }
+        while(A>0){
+            if(sum > 21 || (text===dealer_text && sum > 16)){
+                sum = sum - 10;
+            }
+            A--;
+        }
+        return sum;
+    }
+
+    //ディーラーの合計数の表示、初期はfalse、最後はtrue
+    const setSumD = (end) => {
+        let sum = parseFloat(dealer_text[1].slice(1));
+        if(end){
+            sum = setSum(dealer_text);        
+        }else{
+            if(sum >10){sum = 10;}
+            else if (sum === 1){sum = 11};
+        }
+        document.getElementById("dealer_sum").textContent = "ディーラーの合計： " + sum;
+    }
+
+    //ヒットを押したときの処理
+    const clickHit = () =>{
+        document.getElementById("hit").addEventListener("click",function() {
+            if(!result){
+                try{document.getElementById("doubledown").remove();}
+                catch{};
+                setCardP(getDeck(player_text),"p" + player_text.length);
+                if(setSum(player_text)<21){
+                    document.getElementById("player_sum").textContent = "プレイヤーの合計： " + setSum(player_text);
+                }else{
+                    document.getElementById("player_sum").textContent = "プレイヤーの合計： " + setSum(player_text);
+                    dealerDrow();
+                }
+            }else{
+                resetCard("dealer_card");
+                resetCard("player_card");
+                dealer_text.splice(0,dealer_text.length);
+                player_text.splice(0,player_text.length);
+                result = false;
+                //盤面を整理
+                // resetBet();
+                resetField();
+            }
+        })
+    }
+    //スタンドを押したときの処理
+    const clickStand = () =>{
+        document.getElementById("stand").addEventListener("click",function(){
+            if(result === false){
+                dealerDrow()
+            }
+        })
+    }
+
+    //ダブルダウンを押したときの処理
+    const clickDoubledown = () =>{
+        document.getElementById("doubledown").addEventListener("click",function(){
+            setCardP(getDeck(player_text),"p3");
+            document.getElementById("player_sum").textContent = "プレイヤーの合計： " + setSum(player_text);
+            doubledown = 1;
+            dealerDrow();
+        })
+    }
+    
+    //ディーラードローの処理
+    const dealerDrow = () =>{
+        while(setSum(dealer_text)<17){
+            setCardD(getDeck(dealer_text),"d" + dealer_text.length,true);
+        }
+        document.getElementById("d1").setAttribute("class", "card")
+        setSumD(true);
+        setResult();
+        const h = document.getElementById("hit");
+        h.setAttribute("class","retry");
+        if(deck.length>16){
+            h.textContent = "リトライ"
+        }else{
+            h.textContent = "シャッフル"
+        }
+        document.getElementById("stand").remove();
+        try{document.getElementById("doubledown").remove();}
+        catch{};
+    }
+
+    //決着判定
+    const setResult = () =>{
+        const d = setSum(dealer_text);
+        const p = setSum(player_text);
+        const db = (d===21 && dealer_text.length===2) ? true:false;
+        const pb = (p===21 && player_text.length===2) ? true:false;
+        const r = document.getElementById("result");
+        if(pb){
+            if(db){
+                r.textContent ="PUSH..."
+                count_push++;
+                //両者ブラックジャック
+            }else{
+            r.textContent ="BLACK JACK!!"
+            count_win++;
+            document.getElementById("player_sum").textContent = "プレイヤーの合計： " + setSum(player_text);
+            }
+        }else if(db){
+            r.textContent ="You Lose..."
+            count_lose++;
+            
+            //ディーラーがブラックジャック
+        }else{
+            if(p>21){
+                r.textContent = "Bust!　You Lose..."
+                count_lose = count_lose + 1 + doubledown;
+            }else{
+                if(d>21){
+                    r.textContent = "You Win!"
+                    count_win = count_win + 1 + doubledown;
+                }else{
+                    if(d===p){
+                        r.textContent = "PUSH..."
+                        count_push++;
+                    }else if(d>p){
+                        r.textContent = "You Lose..."
+                        count_lose = count_lose + 1 + doubledown;
+                    }else{
+                        r.textContent = "You Win!"
+                        count_win = count_win + 1 + doubledown;
+                    }
+                }
+            }
+        }
+        document.getElementById("record").textContent = count_win + " 勝　" + count_lose + " 敗　" + count_push + " 分"
+        result = true;
+    }
+
+    //カードのリセット
+    const resetCard = (card) =>{
+        let x =document.getElementById(card)
+        while(x.lastChild){
+            x.removeChild(x.lastChild)
+        }
+    }
+
+    //フィールドのセット
+    const resetField = () =>{
+        if(deck.length<15){
+            deck.splice(0,deck.length);
+            setDeck();
+        }
+        setCardD(getDeck(dealer_text),"d1",false);
+        setCardD(getDeck(dealer_text),"d2",true);
+        setSumD(false);
+        setCardP(getDeck(player_text),"p1");
+        setCardP(getDeck(player_text),"p2");
+        doubledown = 0;
+        document.getElementById("hit").removeAttribute("class");
+        document.getElementById("hit").textContent = "ヒット";
+        setButton();
+        document.getElementById("result").textContent = "";
+        clickStand();
+        clickDoubledown();
+        if (setSum(player_text)===21){
+            dealerDrow();
+        }else{
+            document.getElementById("player_sum").textContent = "プレイヤーの合計： " + setSum(player_text);
+        }
+    }
+
+    //スタンドボタン・ダブルダウンボタンのセット
+    function setButton(){
+        const n = document.createElement("div");
+        n.setAttribute("id","stand");
+        n.textContent = "スタンド";
+        document.querySelector("#button").appendChild(n);
+        const dd = document.createElement("div");
+        dd.setAttribute("id","doubledown");
+        dd.textContent = "ダブルダウン";
+        document.querySelector("#button").appendChild(dd);        
+    }
+
+    //ベットボタン・ディールボタンのセット
+    function setBet(){
+        const n = document.createElement("div");
+        n.setAttribute("id","bet");
+        n.textContent = "ベット";
+        document.querySelector("#button").appendChild(n);
+        const d = document.createElement("div");
+        d.setAttribute("id","deal");
+        d.textContent = "ディール";
+        document.querySelector("#button").appendChild(d);
+    }
+
+    //ベット状態に見せかけの盤面整理
+    function resetBet(){
+        const A = document.createElement("div");
+        A.setAttribute("class", "card_b")
+        document.querySelector("#player_card").appendChild(A);
+        const B = document.createElement("div");
+        B.setAttribute("class", "card_b")
+        document.querySelector("#player_card").appendChild(B);
+        const C = document.createElement("div");
+        C.setAttribute("class", "card_b")
+        document.querySelector("#dealer_card").appendChild(C);
+        const D = document.createElement("div");
+        D.setAttribute("class", "card_b")
+        document.querySelector("#dealer_card").appendChild(D);
+    }
+
+    resetField();
+    clickHit();
+
+
+
+</script>
+</html>

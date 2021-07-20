@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUIZ</title>
+</head>
+<style>
+    li{
+        width: 300ox;
+        height: 50px;
+        border: 1px solid;
+        background-color: beige;
+    }
+    .seikai{
+        background-color: blue;
+        color: white;
+        border: 1px solid;
+    }
+    .fuseikai{
+        background-color: red;
+        color: white;
+        border: 1px double;
+    }
+    .clear_text{
+        /*padding-top: 30px;
+        text-indent: 100%;
+        white-space: nowrap;
+        overflow: hidden;*/
+        font-size: 0;
+        width: 900px;
+        padding-top: 25px;
+    }
+    .sentakushi,.seikai,.fuseikai{
+        width: 400px;
+        margin: 20px auto 0 auto;
+        padding: 25px 50px 0 100px;
+    }
+    .sentakushi{
+        list-style-type: none;
+    }
+    .mondai,.kaisetsu{
+        text-align: center;
+        padding: 10px 0 30px 0;
+    }
+
+</style>
+<body>
+    <h2 class="mondai">問題</h2>
+    <p class="mondai">SBRにおいてジャイロ・ツェペリが騎乗した馬の名前は？</p>
+    <ul>
+        <li id="A" class="sentakushi">A: ヴァルキリー</li>
+        <li id="B" class="sentakushi">B: スロー・ダンサー</li>
+        <li id="C" class="sentakushi">C: シルバー・バレット</li>
+        <li id="D" class="sentakushi">D: ゴースト・ライダー・イン・ザ・スカイ</li>
+    </ul>
+    <p id="E" class="clear_text">ヴァルキリーが正解。<br>スロー・ダンサーはジョニィ・ジョースター<br>シルバー・バレットはディエゴ・ブランドー<br>ゴースト・ライダー・イン・ザ・スカイはマウンテン・ティムの馬。</p>
+</body>
+<script>
+    //const answer_A = document.getElementById("A");
+    //const answer_B = document.getElementById("B");
+    //const answer_C = document.getElementById("C");
+    //const answer_D = document.getElementById("D");
+    const answer4 = [document.getElementById("A"),document.getElementById("B"),document.getElementById("C"),document.getElementById("D")]
+    let select_A = "A: ヴァルキリー";
+    let select_B = "B: スロー・ダンサー";
+    let select_C = "C: シルバー・バレット";
+    let select_D = "D: ゴースト・ライダー・イン・ザ・スカイ";
+    let select4 = [select_A,select_B,select_C,select_D]
+
+    //const select_E = document.createElement("li");
+    //select_E.textContent = "追加"
+    //document.getElementById("C").after(select_E)
+
+    var random = Math.floor(Math.random()*4);
+    select4[0] = select4[random];
+    select4[random] = select_A;
+    let selectnum = [random,1,2,3];
+    selectnum[random] = 0;
+
+
+
+    function selectseikai(answerID,select,seikai){
+        if(seikai == true){
+        answerID.textContent=select + "　正解！";
+        answerID.setAttribute("class","seikai");
+        }
+        else{
+        answerID.textContent=select + "　不正解！";
+        answerID.setAttribute("class","fuseikai");
+        }
+        document.getElementById("E").setAttribute("class","kaisetsu");
+        clicked = true;
+    }
+    
+
+
+    let clicked = false;
+    let judge = false;
+    answer4[selectnum[0]].addEventListener("click",function(){
+        //やりたいこと
+        if (clicked == false){
+            if(selectnum[0]==0){judge = true;}
+            selectseikai(answer4[selectnum[0]],select4[selectnum[0]],judge);
+    }})
+    answer4[selectnum[1]].addEventListener("click",function(){
+        if (clicked == false) {
+            if(selectnum[1]==0){judge = true;}
+            selectseikai(answer4[selectnum[1]],select4[selectnum[1]],judge);
+        }})
+    answer4[selectnum[2]].addEventListener("click",function(){
+        if (clicked == false){
+            if(selectnum[2]==0){judge = true;}
+            selectseikai(answer4[selectnum[2]],select4[selectnum[2]],judge);
+    }})
+    answer4[selectnum[3]].addEventListener("click",function(){
+        if (clicked == false){
+            if(selectnum[3]==0){judge = true;}
+            selectseikai(answer4[selectnum[3]],select4[selectnum[3]],judge);
+    }})
+
+    
+
+</script>
+</html>

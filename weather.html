@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>天気予報 ～ Weather Forecast</title>
+    <style>
+        body{
+            background-color: azure;
+        }
+        h1{
+            margin: 0;
+        }
+        div{
+            height: 30px;
+            width: 200px;
+            margin: 5px;
+            border: 5px outset aquamarine;
+            background-color: aliceblue;
+            text-align: center;
+            padding-top: 7px;
+            border-radius: 5px;
+        }
+        .strong{
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        #text2,#text3{
+            font-size: 130%;
+            margin: 0;
+        }
+        #text4{
+            margin: 30px 0 80px 0;
+        }
+        #text5{
+            font-size: 70%;
+        }
+        div:active{
+            border: 5px inset aquamarine;
+        }
+        #main{
+            display:flex;
+            flex-wrap: wrap;
+        }
+    </style>
+  </head>
+
+  <body>
+    <h1>全国の天気予報</h1>
+    <section id="main"></section>
+    <p id="text1"></p>
+    <p id="text2"></p>
+    <p id="text3"></p>
+    <p id="text4"></p>
+    <p id="text5"></p>
+</body>
+  <script>
+    // API配信のURL
+
+    // let url_Tokyo = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/012000.json"
+    let url_all = "http://www.jma.go.jp/bosai/common/const/area.json"
+    let element = null;
+    let pointdata = [];
+
+    const getWeather = async (url) => {
+        // 指定したurlのAPIからjsonデータを取得
+        const response = await fetch(url)
+        // jsonデータをオブジェクトに変換する
+        return response.json()
+    }
+
+    const getData = async (url) => {
+        data = await getWeather(url);
+        document.getElementById("text2").textContent = data.publishingOffice + "から";
+        document.getElementById("text3").textContent = data.targetArea + "の天気予報をお知らせします。";
+        document.getElementById("text4").innerText = data.text
+        document.getElementById("text5").textContent = "更新時刻：" +data.reportDatetime;
+
+    }
+
+    const getElement = (data) => {
+        element = Object.keys(data.offices).sort((a,b)=>a-b)
+        for(i=0;i<element.length;i++){
+            pointdata.push(data.offices[element[i]].name);
+        }
+        console.log(element);
+        console.log(pointdata)
+        for(i=0;i<element.length;i++){
+            createDiv(i);
+            clickButton(element[i]);
+        }
+    }
+
+    const getDataAll = async () => {
+        let data = await getWeather(url_all);
+        getElement(data)
+    }
+
+    const resetAll = (n) =>{
+        let x =document.getElementById(n)
+        while(x.lastChild){
+            x.removeChild(x.lastChild)
+        }
+    }
+    const createDiv = (idnum) =>{
+        let n = document.createElement("div");
+        n.setAttribute("id",element[idnum]);
+        if(element[idnum]==="290000"){
+            n.setAttribute("class","strong");
+        }
+        n.textContent = pointdata[idnum];
+        document.querySelector("#main").appendChild(n);
+    }
+
+    const clickButton = (id) =>{
+        document.getElementById(id).addEventListener("click",function() {
+            const url_point = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/" + id + ".json"
+            resetAll("main");
+            getData(url_point);
+        })
+    }
+    getDataAll()
+
+
+
+  </script>
+</html>

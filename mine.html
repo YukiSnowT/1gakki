@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja"  onselectstart="return false;">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マインスイーパ</title>
+</head>
+<style>
+    div{
+        background-color: silver;
+        border: 5px solid silver;
+        width: 20px;
+        height: 20px;
+        text-align: center;
+    }
+    .close{
+        border: 5px outset;
+        cursor: pointer;
+    }
+    .close_g{
+        border: 5px outset;
+        cursor: default;
+    }
+    /* .close:active{
+        border: 5px inset;
+    } */
+    .open{
+        padding: 3px;
+        border: 2px solid #444;
+        font-weight: bold;
+        cursor: default;
+    }
+    .bomb{
+        padding: 2px;
+        border: 3px ridge #444;
+        cursor: default;
+    }
+    .redbomb{
+        background-color: red;
+    }
+    .n1{
+        color: blue;
+    }
+    .n2{
+        color: green;
+    }
+    .n3{
+        color: red;
+    }
+    .n4{
+        color: navy;
+    }
+    .n5{
+        color: purple;
+    }
+    .n6{
+        color: aqua;
+    }
+    .n7{
+        color: black;
+    }
+    .n8{
+        color: grey;
+    }
+    #main{
+        display: flex;
+        margin: auto;
+        flex-direction: column;
+    }
+    #sub{
+        display: flex;
+        border: 10px ridge silver;
+        margin-bottom: -10px;
+        background-color: #ddd;
+        cursor: default
+    }
+    #field{
+        display: flex;
+        flex-wrap: wrap;
+        margin: auto;
+        border: 10px ridge silver;
+    }
+    #reset{
+        border: 3px outset silver;
+        font-size: 1.6em;
+        text-align: center;
+        cursor: pointer;
+    }
+    #reset:active{
+        border: 3px inset silver;
+    }
+    h3{
+        border: 2px inset silver;
+        background-color: black;
+        padding-right: 5px;
+        color: red;
+        font-size: 1.6em;
+        text-align: right;
+    }
+    h4{
+        border: 3px outset silver;
+        font-size: 20px;
+        text-align: center;
+        margin: 10px auto 0 auto;
+        width: 250px;
+        height: 32px;
+        cursor: pointer;
+    }
+    h4:active{
+        border: 3px inset silver;
+    }
+    #easy{
+        background-color: #afa;
+        color: green;
+    }
+    #normal{
+        background-color: #aaf;
+        color: purple;
+    }
+    #hard{
+        background-color: #faa;
+        color: red;
+    }
+    #custom{
+        background-color: #aaa;
+        color: black;
+    }
+    #custom_num{
+        display: flex;
+        height: 32px;
+        margin: 10px auto 10px auto;
+    }
+    input{
+        height: auto;
+        width: 35px;
+    }
+    p{
+        margin: 6px 3px 0 3px;
+    }
+</style>
+<body oncontextmenu="return false;" id = "body">
+    
+</body>
+<script>
+    let field = {
+        name: [],
+        state: [], //1~8と-1~-8でその数字(正でopen、負でclose)、9で0open、-9で0close、-10で初期状態(ランダムセット前)、10で爆弾
+        flag: [], //旗があるかどうか。0or1
+        Width: 9,
+        Height: 9,
+        start: false,
+        mine: [],
+        mine_length: 10,
+        naming: function(){ //マス目の配置
+            for(i=0;i<this.Height;i++){
+                for(j=0;j<this.Width;j++){
+                    const n = document.createElement("div");
+                    let id = "ID" + j + "," + i;
+                    n.setAttribute("id",id);
+                    n.setAttribute("class","close");
+                    this.name.push(id);
+                    this.state.push(-10);
+                    this.flag.push(0);
+                    document.querySelector("#field").appendChild(n)
+                }
+            }
+            document.getElementById("mine_sub").textContent = this.mine_length;
+            document.getElementById("time_sub").textContent = time_start;
+        },
+        allClear: function(){ //初期設定に戻す。幅と地雷の数はそのまま
+            this.name.length = 0;
+            this.state.length = 0;
+            this.flag.length = 0;
+            this.start = false;
+            this.mine.length = 0;
+            time_start = 0;
+            count = 0;
+            gameover = true;
+            timeC = null;
+        }
+    }
+    
+    let time_start = 0;
+    let count = 0;
+    let gameover = true;
+    let timeC = null
+
+    //ボタンを押したときの処理
+    const clickButton = (idnum) =>{
+        document.getElementById(field.name[idnum]).addEventListener("click",function(){
+            if(gameover&&field.flag[idnum]===0){
+                if(!field.start){
+                    setField(idnum);
+                    timeC = setInterval("displayTime()",1000);
+                }
+                openFirld(idnum);
+            }
+        })
+    }
+
+    //右クリック時の処理
+    const clickRight = (idnum) =>{
+        document.getElementById(field.name[idnum]).addEventListener("contextmenu",function(){
+            if(gameover){
+                if(field.flag[idnum]===0&&(field.state[idnum]<0||field.state[idnum]===10)){
+                    const n = document.getElementById(field.name[idnum]);
+                    n.textContent = "🚩";
+                    field.flag[idnum] = 1;
+                    document.getElementById("mine_sub").textContent = field.mine_length - field.flag.reduce((n,m)=>n+m)
+                }else if(field.flag[idnum]===1){
+                    const n = document.getElementById(field.name[idnum]);
+                    n.textContent = "　";
+                    field.flag[idnum] = 0;
+                    document.getElementById("mine_sub").textContent = field.mine_length - field.flag.reduce((n,m)=>n+m)
+                }
+            }
+        })
+    }
+
+
+    //ランダムセット処理
+    const setField = (idnum) =>{
+        field.start = true;
+        const n  = document.getElementById(field.name[idnum])
+        n.setAttribute("class" , "open");
+        //地雷セット
+        mineSet(idnum);
+        //stateの格納
+        for(k=0;k<field.name.length;k++){
+            stateSet(k);
+        }
+    }
+
+
+    //地雷セット
+    const mineSet = (idnum) =>{ //idnumは地雷をセットしない場所
+        field.mine.push(idnum);
+        for(i=0;i<field.mine_length;i++){
+            let j = 0
+            let x = Math.floor(Math.random()*field.Width*field.Height)
+            while(j<field.mine.length){
+                while(field.mine[j] == x){
+                    j=0
+                    x = Math.floor(Math.random()*field.Width*field.Height);
+                }
+                j++;
+            }
+            field.mine.push(x);
+        }
+        field.mine.shift();
+    }
+
+    //stateの格納
+    const stateSet = (idnum) =>{ //idnumは格納する場所。forで回す。
+        let count = 0;
+        for(i=0;i<field.mine.length;i++){
+            if(idnum === field.mine[i]){count = -10; break;} //地雷チェック
+            if(idnum>field.Width-1&&field.mine[i]===idnum-field.Width){count++;} //上
+            if(idnum>field.Width-1&&idnum%field.Width!==field.Width-1&&field.mine[i]===idnum-field.Width+1){count++;} //右上
+            if(idnum%field.Width!==field.Width-1&&field.mine[i]===idnum+1){count++;} //右
+            if(idnum<field.Width*(field.Height-1)&&idnum%field.Width!==field.Width-1&&field.mine[i]===idnum+field.Width+1){count++;} //右下
+            if(idnum<field.Width*(field.Height-1)&&field.mine[i]===idnum+field.Width){count++;} //下
+            if(idnum<field.Width*(field.Height-1)&&idnum%field.Width!==0&&field.mine[i]===idnum+field.Width-1){count++;} //左下
+            if(idnum%field.Width!==0&&field.mine[i]===idnum-1){count++;} //左
+            if(idnum>field.Width-1&&idnum%field.Width!==0&&field.mine[i]===idnum-field.Width-1){count++;} //左上
+        }
+        if(count === 0){count = 9;}
+        field.state[idnum]=0-count;
+    }
+
+    //オープン処理
+    const openFirld = (idnum) =>{
+        if(field.state[idnum]<0&&field.flag[idnum]===0){
+            field.state[idnum] = 0-field.state[idnum];
+            if(field.state[idnum] === 9){
+                const n = document.getElementById(field.name[idnum]);
+                n.setAttribute("class" , "open");
+                n.textContent = "　";
+                if(idnum>field.Width-1){openFirld(idnum-field.Width);}//上
+                if(idnum>field.Width-1&&idnum%field.Width!==field.Width-1){openFirld(idnum-field.Width+1);}//右上
+                if(idnum%field.Width!==field.Width-1){openFirld(idnum+1);}//右
+                if(idnum<field.Width*(field.Height-1)&&idnum%field.Width!==field.Width-1){openFirld(idnum+field.Width+1);}//右下
+                if(idnum<field.Width*(field.Height-1)){openFirld(idnum+field.Width);}//下
+                if(idnum<field.Width*(field.Height-1)&&idnum%field.Width!==0){openFirld(idnum+field.Width-1);}//左下
+                if(idnum%field.Width!==0){openFirld(idnum-1);}//左
+                if(idnum>field.Width-1&&idnum%field.Width!==0){openFirld(idnum-field.Width-1);}//左上
+            }else{
+                const n = document.getElementById(field.name[idnum]);
+                n.setAttribute("class" , "open");
+                n.classList.add("n"+field.state[idnum]);
+                n.textContent = field.state[idnum];
+            }
+            checkClear();
+        }else if(field.state[idnum] === 10&&field.flag[idnum]===0){
+            gameover = false;
+            for(i=0;i<field.name.length;i++){
+                if(field.state[i]<0){
+                    document.getElementById(field.name[i]).setAttribute("class","close_g");
+                    if(field.flag[i]===1){
+                        document.getElementById(field.name[i]).textContent = "✖";
+                    }
+                }else if(field.state[i]===10&&field.flag[i]===0){
+                    document.getElementById(field.name[i]).setAttribute("class","bomb");
+                    document.getElementById(field.name[i]).textContent = "💣";
+                }
+                document.getElementById(field.name[idnum]).classList.add("redbomb");
+                document.getElementById("reset").textContent = "🙁";
+                clearInterval(timeC);
+            }
+        }
+    }
+
+
+    //時間経過の表示
+    const displayTime = () =>{
+        time_start++;
+        document.getElementById("time_sub").textContent = time_start;
+        if(time_start>998){clearInterval(timeC);}
+    }
+
+    //クリア処理
+    const checkClear = () =>{
+        if(field.state.every(n=>n>0)){
+            clearInterval(timeC);
+            document.getElementById("reset").textContent = "🤩";
+            for(i=0;i<field.Width*field.Height;i++){
+                if(field.flag[i]===0&&field.state[i]===10){
+                    document.getElementById(field.name[i]).textContent = "💣";
+                }
+            }
+            gameover = false;
+        }
+    }
+
+    //必要なタグの配置
+    const creAll = () => {
+        const section = document.createElement("section");
+        section.setAttribute("id","main");
+        section.style.width = (field.Width)*30 + "px";
+        document.querySelector("body").appendChild(section);
+        
+        const section_sub = document.createElement("section");
+        section_sub.setAttribute("id","sub");
+        section_sub.style.width = (field.Width)*30 + "px";
+        section_sub.style.height = (field.Height)*6 + "px";
+        document.querySelector("#main").appendChild(section_sub);
+
+        const section_field = document.createElement("section");
+        section_field.setAttribute("id","field");
+        section_field.style.width = (field.Width)*30 + "px";
+        section_field.style.height = (field.Height)*30 + "px";
+        document.querySelector("#main").appendChild(section_field);
+
+        const mine_sub = document.createElement("h3");
+        mine_sub.setAttribute("id","mine_sub");
+        mine_sub.style.width = (field.Height)*8 + "px";
+        mine_sub.style.height = (field.Height+9)*2 + "px";
+        mine_sub.style.margin = field.Height-2 + "px auto";
+        mine_sub.style.paddingTop = (field.Height-9)*2 + "px"
+        document.querySelector("#sub").appendChild(mine_sub);
+
+        resetSub();
+
+    }
+
+    const resetSub = () => {
+        const reset = document.createElement("section");
+        reset.setAttribute("id","reset");
+        reset.style.width = (field.Height)*4 + "px";
+        reset.style.height = (field.Height+9)*2 + "px";
+        reset.style.margin = field.Height-2 + "px auto";
+        reset.textContent = "🙂"
+        reset.style.paddingTop = (field.Height-9)*2 + "px"
+        document.querySelector("#sub").appendChild(reset);
+
+        const time_sub = document.createElement("h3");
+        time_sub.setAttribute("id","time_sub");
+        time_sub.style.width = (field.Height)*8 + "px";
+        time_sub.style.height = (field.Height+9)*2 + "px";
+        time_sub.style.margin = field.Height-2 + "px auto";
+        time_sub.style.paddingTop = (field.Height-9)*2 + "px"
+        document.querySelector("#sub").appendChild(time_sub);
+    }
+
+    //creAll直後まで戻す
+    const resetAll = () =>{
+        clearInterval(timeC);
+        field.allClear();
+        document.getElementById("mine_sub").textContent = " ";
+        document.getElementById("time_sub").textContent = " ";
+        reset.textContent = "🙂"
+        let x =document.getElementById("field");
+        while(x.lastChild){
+            x.removeChild(x.lastChild)
+        }
+        document.getElementById("sub").removeChild(document.getElementById("sub").lastChild);
+        document.getElementById("sub").removeChild(document.getElementById("sub").lastChild);
+        resetSub();
+    }
+
+    //開始ボタンの作成
+    const setOpening = () =>{
+        const easy = document.createElement("h4");
+        easy.setAttribute("id","easy");
+        easy.textContent = "初級(9×9 地雷10個)"
+        document.querySelector("#field").appendChild(easy);
+
+        const normal = document.createElement("h4");
+        normal.setAttribute("id","normal");
+        normal.textContent = "中級(16×16 地雷40個)"
+        document.querySelector("#field").appendChild(normal);
+
+        const hard = document.createElement("h4");
+        hard.setAttribute("id","hard");
+        hard.textContent = "上級(30×16 地雷99個)"
+        document.querySelector("#field").appendChild(hard);
+
+        const custom = document.createElement("h4");
+        custom.setAttribute("id","custom");
+        custom.textContent = "カスタム"
+        document.querySelector("#field").appendChild(custom);
+
+        const custom_num = document.createElement("section");
+        custom_num.setAttribute("id","custom_num");
+        custom_num.style.width = (field.Width)*30-20 + "px";
+        custom_num.textContent = "　"
+        document.querySelector("#field").appendChild(custom_num);
+
+        const input_x = document.createElement("input");
+        input_x.setAttribute("id","input_x");
+        input_x.setAttribute("type","number");
+        input_x.setAttribute("name","in_x");
+        input_x.setAttribute("min","9");
+        input_x.setAttribute("max","30");
+        input_x.setAttribute("value","9");
+        document.querySelector("#custom_num").appendChild(input_x);
+
+        const x = document.createElement("p");
+        x.textContent = "×"
+        document.querySelector("#custom_num").appendChild(x);
+
+        const input_y = document.createElement("input");
+        input_y.setAttribute("id","input_y");
+        input_y.setAttribute("type","number");
+        input_y.setAttribute("name","in_y");
+        input_y.setAttribute("min","9");
+        input_y.setAttribute("max","30");
+        input_y.setAttribute("value","9");
+        document.querySelector("#custom_num").appendChild(input_y);
+
+        const m = document.createElement("p");
+        m.textContent = "　地雷数："
+        document.querySelector("#custom_num").appendChild(m);
+
+        const input_m = document.createElement("input");
+        input_m.setAttribute("id","input_m");
+        input_m.setAttribute("type","number");
+        input_m.setAttribute("name","in_m");
+        input_m.setAttribute("min","1");
+        input_m.setAttribute("max","99");
+        input_m.setAttribute("value","10");
+        document.querySelector("#custom_num").appendChild(input_m);
+
+
+    }
+
+    //ボタンの処理
+    const clickOpen = (id) =>{
+        document.getElementById(id).addEventListener("click",function(){
+            if(id==="easy"){
+                field.Width = 9;
+                field.Height = 9;
+                field.mine_length = 10;
+            }else if(id==="normal"){
+                field.Width = 16;
+                field.Height = 16;
+                field.mine_length = 40;
+            }else if(id==="hard"){
+                field.Width = 30;
+                field.Height = 16;
+                field.mine_length = 99;
+            }else if(id==="custom"){
+                field.Width = Number(document.getElementById("input_x").value);
+                field.Height = Number(document.getElementById("input_y").value);
+                field.mine_length = Number(document.getElementById("input_m").value);
+            }
+            const x = document.getElementById("body");
+            while(x.lastChild){
+                x.removeChild(x.lastChild)
+            }
+            creAll();
+            gameStart();
+        })
+    }
+
+    const resetButton = () =>{
+        document.getElementById("reset").addEventListener("click",function(){
+            resetAll();
+            
+        console.log("test")
+            gameStart();
+        })
+    }
+
+
+    const gameStart = () =>{
+        field.naming()
+        for(i=0;i<field.Width*field.Height;i++){
+            clickButton(i);
+            clickRight(i);
+        }
+        resetButton();
+    }
+
+
+    creAll();
+    setOpening();
+    clickOpen("easy");
+    clickOpen("normal");
+    clickOpen("hard");
+    clickOpen("custom");
+    // gameStart();
+    const timeval = () =>{
+        let timing = performance.timing;
+        console.log(timing.redirectEnd - timing.redirectStart);
+        console.log(timing.domainLookupEnd - timing.domainLookupStart);
+        console.log(timing.connectEnd - timing.connectStart);
+        console.log(timing.responsetEnd - timing.responseStart);
+        console.log(timing.domInteractive - timing.domLoading);
+    }
+    timeval();
+</script>
+</html>

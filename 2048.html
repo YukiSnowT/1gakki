@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048</title>
+    <style>
+        h1,h2{
+            margin: 0;
+        }
+        h2{
+            color: red;
+        }
+        #button{
+            display: flex;
+        }
+        .button{
+            border: 3px outset white;
+            margin: 10px;
+            width: 120px;
+            height: 50px;
+            text-align: center;
+            padding-top: 8px;
+            font-size: 2em;
+            color: white;
+        }
+        .button:active{
+            border: 3px inset white;
+        }
+        #num4{
+            background-color:#808;
+        }
+        #num5{
+            background-color:#b3b;
+        }
+        #num6{
+            background-color:#e6e;
+        }
+        #num8{
+            background-color:#f9f;
+        }
+        
+        
+        #board{
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0;
+            padding: 0;
+            border: 3px solid;
+        }
+        .board4,.board5{
+            width: 400px;
+            height: 400px;
+        }
+        .board6,.board8{
+            width: 600px;
+            height: 600px;
+        }
+        
+        
+        .empty4,.empty5,.empty6,.empty8{
+            border: 10px ridge;
+            text-align: center;
+            font-weight: bold;
+        }
+        .empty4,.empty6{
+            width: 80px;
+            height: 60px;
+            font-size: 1.6em;
+            padding-top: 20px;
+        }
+        .empty5{
+            width: 60px;
+            height: 44px;
+            font-size: 1.1em;
+            padding-top: 16px;
+        }
+        .empty8{
+            width: 55px;
+            height: 40px;
+            padding-top: 15px;
+        }
+        .p0{
+            font-size: 0;
+        }
+        .p2{
+            border: 10px outset;
+            background-color: #eff;
+        }
+        .p4{
+            border: 10px outset;
+            background-color: #cff;
+        }
+        .p8{
+            border: 10px outset;
+            background-color: #aff;
+        }
+        .p16{
+            border: 10px outset;
+            background-color: #9ff;
+        }
+        .p32{
+            border: 10px outset;
+            background-color: #7ff;
+        }
+        .p64{
+            border: 10px outset;
+            background-color: #5ff;
+        }
+        .p128{
+            border: 10px outset;
+            background-color: #4df;
+        }
+        .p256{
+            border: 10px outset;
+            background-color: #3bf;
+        }
+        .p512{
+            border: 10px outset;
+            background-color: #29f;
+        }
+        .p1024{
+            border: 10px outset;
+            background-color: #17f;
+        }
+        .p2048{
+            border: 10px outset;
+            background-color: #05f;
+            color: white;
+        }
+
+
+    </style>
+</head>
+<body>
+    <h1>2048</h1>
+    <h2 id="result">　</h2>
+    <div id="button"></div>
+    <div id="main"></div>
+    <p>ルール・操作方法<br>上下左右キーで盤面の駒全てが押した方向に端まで動く。<br>その後空いているマスに2の駒（たまに4の駒）が現れる。<br>同じ数字をぶつけると数字が合計されて合体し、その数値分スコアがアップ。<br>2048の駒を作ることができればクリア。<br>動けなくなったらゲームオーバー。<br>BackSpaceキーで1手だけ戻ることができる。</p>
+</body>
+<script>
+    //グローバル変数の定義
+    let mode = ["num4","num5","num6","num8"];
+    let id_name = [];
+    let id_state = [];
+    let id_state_before = [];
+    let id_sumcheck = [];
+    let boardtype = null;
+    let selectnum = 4;
+    let score = 0;
+    let score_before = 0;
+    let game = true;
+
+    //指定したタブの子要素を全消去
+    const resetAll = (id) =>{
+        let x =document.getElementById(id)
+        while(x.lastChild){
+            x.removeChild(x.lastChild)
+        }
+    }
+
+
+    //選んだ数字を盤面・マス目に反映して描画（引数は4,5,6,8）
+    const creNum = (num) =>{
+        createBoard("board"+num)
+        let m = num*num;
+        for(i=0;i<m;i++){
+            let n  = document.createElement("div");
+            n.setAttribute("id","ID" + i);
+            id_name.push("ID"+i);
+            id_state.push(0);
+            id_sumcheck.push(true);
+            n.setAttribute("class","empty" + num);
+            document.querySelector("#board").appendChild(n)
+        }
+    }
+
+    //ボタンを作る
+    const creButton = () =>{
+        for(i=0;i<mode.length;i++){
+            let n = document.createElement("div");
+            n.setAttribute("id",mode[i]);
+            n.setAttribute("class","button");
+            selectnum = Math.floor(i/3)+4+i;
+            n.textContent = ( selectnum + "×" + selectnum);
+            document.querySelector("#button").appendChild(n);
+            clickButton(mode[i]);
+        }
+    }
+
+    //ボタンが押された処理
+    const clickButton = (n) =>{
+        document.getElementById(n).addEventListener("click",function(){
+            let m = 0
+            for(i=0;i<mode.length;i++){
+                if(mode[i]===n){
+                    m = i;
+                    break;
+                }
+            }
+            selectnum = Math.floor(m/3)+4+m
+            creNum(selectnum)
+            resetAll("button")
+            setTwoorFour();
+            setTwoorFour();
+        })
+    }
+
+    //盤を作る
+    const createBoard = (clas) =>{
+        let n  = document.createElement("div");
+        n.setAttribute("id","board")
+        n.setAttribute("class",clas)
+        document.querySelector("#main").appendChild(n)
+        document.getElementById("result").textContent="score : " + score;
+    }
+
+    //キーを押す処理
+    const moveDown = () =>{
+        document.addEventListener("keydown",keyDown)
+    }
+
+    //キーが押された処理
+    //↑でArrowUp、↓でArrowDown、←でArrowLeft、→でArrowRight
+    const keyDown = (e) =>{
+        if(game){
+            if(e.key === "ArrowUp"){
+                console.log("↑を押した");
+                id_state_before = id_state.concat();
+                score_before = score;
+                for(i=0;i<id_name.length;i++){
+                    pointUp(i);
+                }
+                if(!checkHairetsu()){
+                    setTwoorFour();
+                }
+                displayNum();
+                gameSet();
+            }else if(e.key === "ArrowDown"){
+                console.log("↓を押した");
+                id_state_before = id_state.concat();
+                score_before = score;
+                for(i=id_name.length;i>-1;i--){
+                    pointDown(i);
+                }
+                if(!checkHairetsu()){
+                    setTwoorFour();
+                }
+                displayNum();
+                gameSet();
+            }else if(e.key === "ArrowLeft"){
+                console.log("←を押した");
+                id_state_before = id_state.concat();
+                score_before = score;
+                for(i=0;i<selectnum;i++){
+                    for(j=0;j<selectnum;j++){
+                        pointLeft(j*selectnum+i)
+                    }
+                }
+                if(!checkHairetsu()){
+                    setTwoorFour();
+                }
+                displayNum();
+                gameSet();
+            }else if(e.key === "ArrowRight"){
+                console.log("→を押した");
+                id_state_before = id_state.concat();
+                score_before = score;
+                for(i=0;i<selectnum;i++){
+                    for(j=0;j<selectnum;j++){
+                        pointRight((j+1)*selectnum-(i+1))
+                    }
+                }
+                if(!checkHairetsu()){
+                    setTwoorFour();
+                }
+                displayNum();
+                gameSet();
+            }else if(e.key ==="Backspace"){
+                console.log("Backspaceを押した");
+                for(i=0;i<id_state.length;i++){
+                    id_state[i]=id_state_before[i];
+                }
+                score = score_before;
+                displayNum();
+            }
+        }
+    }
+
+    //ランダムで2、10％の確率で4を生やす
+    //盤面フルで実行すると無限ループするので注意
+    const setTwoorFour = () =>{
+        if(id_state.some((n)=>n===0)){
+            let n = Math.floor(Math.random() * id_state.length)
+            while(id_state[n] !== 0){
+                n = Math.floor(Math.random() * id_state.length)
+            }
+            let x = document.getElementById("ID"+n);
+            if(Math.floor(Math.random() *10) == 9){
+                x.setAttribute("class","p4");
+                x.classList.add("empty"+selectnum)
+                x.textContent = "4";
+                id_state[n]=4;
+            }else{
+                x.setAttribute("class","p2");
+                x.classList.add("empty"+selectnum)
+                x.textContent = "2";
+                id_state[n]=2;
+            }
+        }
+    }
+
+    //指定したマスを上へ移動
+    //id_stateのみ調整するので画面は変わらない。以降同じ
+    const pointUp = (idnum) =>{
+        const upid = idnum - selectnum;
+        if(idnum+1>selectnum){
+            if(id_state[upid]===0){
+                id_state[upid]=id_state[idnum];
+                id_state[idnum]=0;
+                pointUp(upid);
+            }else if(id_state[upid]===id_state[idnum]&&id_sumcheck[upid]){
+                id_state[upid]=id_state[upid]*2;
+                score = score + id_state[upid];
+                id_sumcheck[upid]=false;
+                id_state[idnum]=0;
+            }
+        }
+    }
+
+    //指定したマスを下へ移動
+    const pointDown = (idnum) =>{
+        const downid = idnum + selectnum;
+        if(idnum<id_name.length-selectnum){
+            if(id_state[downid]===0){
+                id_state[downid]=id_state[idnum];
+                id_state[idnum]=0;
+                pointDown(downid);
+            }else if(id_state[downid]===id_state[idnum]&&id_sumcheck[downid]){
+                id_state[downid]=id_state[downid]*2;
+                score = score + id_state[downid];
+                id_sumcheck[downid]=false;
+                id_state[idnum]=0;
+            }
+        }
+    }
+
+    //指定したマスを左へ移動
+    const pointLeft = (idnum) =>{
+        const leftid = idnum - 1;
+        if(idnum%selectnum!==0){
+            if(id_state[leftid]===0){
+                id_state[leftid]=id_state[idnum];
+                id_state[idnum]=0;
+                pointLeft(leftid);
+            }else if(id_state[leftid]===id_state[idnum]&&id_sumcheck[leftid]){
+                id_state[leftid]=id_state[leftid]*2;
+                score = score + id_state[leftid];
+                id_sumcheck[leftid]=false;
+                id_state[idnum]=0;
+            }
+        }
+    }
+
+    //指定したマスを右へ移動
+    const pointRight = (idnum) =>{
+        const rightid = idnum + 1;
+        if(idnum%selectnum!==(selectnum-1)){
+            if(id_state[rightid]===0){
+                id_state[rightid]=id_state[idnum];
+                id_state[idnum]=0;
+                pointRight(rightid);
+            }else if(id_state[rightid]===id_state[idnum]&&id_sumcheck[rightid]){
+                id_state[rightid]=id_state[rightid]*2;
+                score = score + id_state[rightid];
+                id_sumcheck[rightid]=false;
+                id_state[idnum]=0;
+            }
+        }
+    }
+
+
+    //画面の整合性を取り、sumcheckをtrueに戻す
+    const displayNum = () =>{
+        for(i=0;i<id_name.length;i++){
+            const n = id_state[i];
+            let x = document.getElementById(id_name[i]);
+            x.setAttribute("class","p"+n);
+            x.classList.add("empty"+selectnum)
+            x.textContent = n;
+            id_sumcheck[i] = true;
+        }
+        document.getElementById("result").textContent="score : " + score;
+    }
+
+    //全てが埋まっていないか、埋まっていても隣り合う同数が存在するか
+    const checkFull = () =>{
+        let f = false;
+        if(id_state.some((n)=>n===0)){
+            f=true;
+        }else{
+            for(i=0;i<id_name.length;i++){
+                if(i+1>selectnum&&id_state[i]===id_state[i-selectnum]){
+                    f=true;
+                    break
+                }else if(i<id_name.length-selectnum&&id_state[i]===id_state[i+selectnum]){
+                    f=true;
+                    break;
+                }else if(i%selectnum!==0&&id_state[i]===id_state[i-1]){
+                    f=true;
+                    break;
+                }else if(i%selectnum!==(selectnum-1)&&id_state[i]===id_state[i+1]){
+                    f=true;
+                    break;
+                }
+
+            }
+        }
+        return f;
+    }
+
+    //全一致チェック
+    const checkHairetsu = () =>{
+        let t = true;
+        for(i=0;i<id_state.length;i++){
+            if(id_state[i]!==id_state_before[i]){
+                t=false;
+                break;
+            }
+        }
+        return t;
+    }
+    //ゲーム終了
+    const gameSet = () =>{
+        if(id_state.some((n)=>n===2048)){
+            game = false;
+            document.getElementById("result").textContent="Congratulations!";
+        }else if(!checkFull()){
+            game = false;
+            document.getElementById("result").textContent="Game Over　　score : " + score;
+        }
+    }
+
+    moveDown();
+    creButton();
+
+</script>
+</html>

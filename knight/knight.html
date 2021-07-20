@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桂馬飛びパズル ～ Knight Puzzle</title>
+    <style>
+        section {
+            display: flex;
+            width: 610px;
+            height: 610px;
+            padding: 0;
+            border: 3px solid;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            flex-wrap: wrap;
+        }
+        h1{
+            margin: 0;
+            padding: 0;
+        }
+        h2{
+            margin: 10px;
+        }
+        header{
+            display: flex;
+            align-items: center;
+        }
+        .head_l{
+            width: 400px;
+        }
+        p{
+            width: 610px;
+            margin: 0 0 0 2px;
+        }
+        #A, #B, #C, #D, #E, #F, #G, #H, #I, #J, #K, #L, #M, #N, #O, #P, #Q, #R, #S, #T, #U, #V, #W, #X, #Y {
+            width: 120px;
+            height: 120px;
+            border: 1px solid;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            font-size: 5em;
+        }
+
+        .passpoint {
+            color: blue;
+        }
+
+        .clear {
+            background-color: red;
+            color: white;
+            font-size: 50px;
+            width: 610px;
+            text-align: center;
+        }
+        .gameover{
+            color: red;
+            font-size: 50px;
+            width: 610px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="head_l">
+            <h1>桂馬飛びパズル</h1>
+            <h2>★ルール★</h2>
+        </div>
+        <div class="head_r"><img src="img/board.jpg" alt="移動" width="100px" height="100px"></div>
+    </header>
+    <p>上下左右に動ける桂馬（チェスのナイト）を好きな位置に置き、そこから同じマスを通らず全てのマスを通ることができればクリア。動けなくなってしまうとゲームオーバー。好きなスタート地点をクリックして開始！</p>
+    <section>
+        <!-- ここにマス目が入る -->
+    </section>
+    <div><br></div>
+    <div id="result"></div>
+</body>
+<script>
+
+    //グローバル変数の定義
+    const point = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y"]; //地点名称
+    let pass = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //通過チェック
+    let now = 25; //現在地（初期値25）
+    let nextmove = [25, 25, 25, 25, 25, 25, 25, 25]; //次回移動できる点（初期値25でどこでも移動可能、26は移動不可）
+    let count = 1; //地点通過数カウント
+
+    //マス目の作成
+    function createDiv(block) {
+        const div = document.createElement("div");
+        div.textContent = "　"; 
+        div.setAttribute("id", block);
+        document.querySelector("section").appendChild(div);
+    }
+
+
+    //1回目実行、内部で2回目に以降
+    function firstClick(c) {
+        
+        document.getElementById(c).addEventListener("click",function() {
+            if(count === 1){
+                this.setAttribute("class", "passpoint");
+                this.textContent = count; //初回ズレ修正
+                letNext(c);
+                count++;
+            }else{
+                secondClick(c); //countが1でないなら2回目へ
+            }
+        })
+    }
+
+    //2回目以降
+    function secondClick(c) {
+        let k = 0;
+        let next = false;
+            for (i = 0; i < 25; i++) {
+                if (point[i] === c) {
+                    k = i;
+                    break;
+                }
+            }
+            for(i = 0; i<8 ; i++){
+                if(nextmove[i] === k){
+                    next = true;
+                    break;
+                }
+            }
+            if (pass[k] === 0 && next) {
+                document.getElementById(c).setAttribute("class", "passpoint");
+                document.getElementById(c).textContent = count;
+                letNext(c);
+                checkClear();
+                count++;
+            }
+        
+    }
+
+    //移動のチェック
+    function letNext(c){
+        for(i=0;i<25;i++){
+            if(point[i]===c){
+                now = i;
+                pass[i] = 1;
+                setNext();
+                break;
+            }
+        }
+    }
+
+    //次に移動できる点を取得
+    function setNext() {
+        nextmove[0] = now - 3;  //上右右
+        nextmove[1] = now + 7;  //下右右
+        nextmove[2] = now - 7;  //上左左
+        nextmove[3] = now + 3;  //下左左
+        nextmove[4] = now - 9;  //右上上
+        nextmove[5] = now + 11; //右下下
+        nextmove[6] = now - 11; //左上上
+        nextmove[7] = now + 9;  //左下下
+        checkNext();
+    }
+
+    //次の移動の可否の判定。可能ならそのまま、無理なら26を代入。
+    function checkNext() {
+        let cn_0 = (now % 5 === 0) ? true : false;
+        let cn_1 = (now % 5 === 1) ? true : false;
+        let cn_3 = (now % 5 === 3) ? true : false;
+        let cn_4 = (now % 5 === 4) ? true : false;
+        let cns_5 = (now < 5) ? true : false;
+        let cns_10 = (now < 10) ? true : false;
+        let cnb_14 = (now > 14) ? true : false;
+        let cnb_19 = (now > 19) ? true : false;
+        if (cn_3 || cn_4 || cns_5) {
+            nextmove[0] = 26;
+        }
+        if (cn_3 || cn_4 || cnb_19) {
+            nextmove[1] = 26;
+        }
+        if (cn_0 || cn_1 || cns_5) {
+            nextmove[2] = 26;
+        }
+        if (cn_0 || cn_1 || cnb_19) {
+            nextmove[3] = 26;
+        }
+        if (cn_4 || cns_10) {
+            nextmove[4] = 26;
+        }
+        if (cn_4 || cnb_14) {
+            nextmove[5] = 26;
+        }
+        if (cn_0 || cns_10) {
+            nextmove[6] = 26;
+        }
+        if (cn_0 || cnb_14) {
+            nextmove[7] = 26;
+        }
+        for(i=0;i<8;i++){
+            if(nextmove[i]!==26){
+                if(pass[nextmove[i]]===1){
+                    nextmove[i]=26;
+                }
+            }
+        }
+    }
+
+    //クリアまたはゲームオーバーのチェック
+    function checkClear() {
+        if (pass.every((n)=>n!==0)) { //passが全て0でないならクリア
+            document.getElementById("result").setAttribute("class", "clear");
+            document.getElementById("result").textContent = "Congratulations!"; 
+        } else if (nextmove.every((n)=>n===26)) { //nextmoveが全て26ならゲームオーバー
+            document.getElementById("result").setAttribute("class", "gameover");
+            document.getElementById("result").textContent = "Game Over"; 
+        }
+    }
+
+
+    point.map((n) => createDiv(n));
+    point.map((n) => firstClick(n));
+
+
+
+</script>
+
+</html>

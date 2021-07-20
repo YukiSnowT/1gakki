@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r127/three.min.js"></script>
+
+</head>
+
+<body>
+    <canvas id="myCanvas"></canvas>
+</body>
+<script>
+    let rex = 1;
+    let count = 0;
+
+    const init = () =>{
+        // サイズを指定
+        const width = 900;
+        const height = 500;
+
+        //////////////// レンダラーを作成 ////////////////
+        //レンダラー：表示（レンダリング）するために必要なもの。
+        //ここでcanvasと連携させる
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById("myCanvas")
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+
+        //////////////// シーンを作成 ////////////////
+        //シーン：3D空間。3Dの物体や光源をここにおいて描画する。
+        const scene = new THREE.Scene();
+
+        //////////////// カメラを作成 ////////////////
+        //カメラ：どの視点から撮影するか。
+        //PerspectiveCameraは画角、アス比、描画開始距離、描画終了距離を引数としてカメラを作る
+        const camera = new THREE.PerspectiveCamera(45, width / height,1,10000);
+        camera.position.set(0, 0, +1000);
+
+
+        //////////////// 箱を作成 ////////////////
+        // //ジオメトリ：形。BoxGeometryは直方体を作る。        
+        // const geometry = new THREE.BoxGeometry(400, 400, 400);
+        // //マテリアル：色や見た目。MeshNormalMaterialは適当な色。
+        // const material = new THREE.MeshNormalMaterial();
+        // //メッシュ：ジオメトリとマテリアルを持ったオブジェクト。
+        // const box = new THREE.Mesh(geometry, material);
+        // //シーンにメッシュを追加する
+        // scene.add(box);
+
+        // 球体を作成
+        //SphereGeometryは球体を作る。大きさ、横方向角形、縦方向角形？
+        const geometry = new THREE.SphereGeometry(50,30,30);
+        const geometry2 = new THREE.SphereGeometry(200,30,30);
+
+        // 画像を読み込む
+        const loader = new THREE.TextureLoader();
+        const loader2 = new THREE.TextureLoader();
+        const texture = loader.load('moonmap4k.jpg');
+        const texture2 = loader2.load('earthmap1k.jpg');
+        // マテリアルにテクスチャーを設定
+        const material = new THREE.MeshStandardMaterial({
+            map: texture
+        });
+        const material2 = new THREE.MeshStandardMaterial({
+            map: texture2
+        });
+
+        // メッシュを作成
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x -=400
+        const mesh2 = new THREE.Mesh(geometry2, material2);
+        // 3D空間にメッシュを追加
+        scene.add(mesh);
+        scene.add(mesh2);
+
+        // 平行光源
+        //ライトの位置と方向を指定して平行な光
+        //全体を照らすなら.AmbientLight
+        const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+        directionalLight.position.set(1, 1, 10);
+        // シーンに追加
+        scene.add(directionalLight);
+
+        ////////////// 毎フレーム時に実行されるループイベントです
+        //
+        const tick = () =>{
+            count +=0.5;
+            mesh.rotation.y -=0.01;
+            if(mesh.position.x==400){rex = -1;}
+            else if(mesh.position.x==-400){rex = 1;}
+            mesh.position.x = -1*Math.cos(count*Math.PI/180)*400;
+            mesh.position.z = Math.sin(count*Math.PI/180)*400
+            console.log(mesh.position.z)
+            mesh2.rotation.y +=0.01;
+            // mesh.rotation.z +=0.01;
+            renderer.render(scene, camera); // レンダリング
+            requestAnimationFrame(tick); //描画
+        }
+
+        tick();
+
+    }
+    window.addEventListener('load', init);
+
+</script>
+</html>

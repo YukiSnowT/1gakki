@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        ul {
+            list-style: none;
+            margin-left: -20px;
+        }
+        li {
+            width: 800px;
+            height: 75px;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 24px;
+            border: 1px black solid;
+            background-color: yellowgreen
+        }
+        .mondai {
+            width: 800px;
+            height: 200px;
+            margin-left: 20px;
+            padding: 10px;
+            
+            font-size: 24px;
+            border: 1px black solid;
+            background-color: orange;
+        }
+        .true {
+            background-color: blue;
+            color: white;
+        }
+        .false {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class = "mondai">
+        <p>問題文</p>
+    </div>
+    <ul>
+        <!-- <li id="A">A</li>
+        <li id="B">B</li>
+        <li id="C">C</li>
+        <li id="D">D</li> -->
+    </ul>
+</body>
+<script>
+
+    
+    answerObject = {
+        "A" : "北岳",
+        "B" : "槍ヶ岳",
+        "C" : "奥穂高岳",
+        "D" : "剱岳",
+        "E" : "立山",
+        "F" : "富士山"
+    }
+    // answerObjectからA,B,C,D,Eの配列を作る
+    button = Object.keys(answerObject);
+
+    function createLi(select){
+        const li = document.createElement("li");
+        li.textContent =answerObject[select];
+        li.setAttribute("id",select);
+        document.querySelector("ul").appendChild(li);
+    }
+
+    button.map((n)=>createLi(n))
+
+
+    function removeAnswer(answer){
+        // answerはA,B,C,D,Eが順番に入る引数
+        const answerElement = document.getElementById(answer);
+        answerElement.removeAttribute("class");
+        // 正解や不正解から最初の選択肢の文字に戻す
+        answerElement.textContent = answerObject[answer];
+    }
+    
+    
+
+    function clickButton(click){
+        document.getElementById(click).addEventListener("click", function () {
+        const answerElement = document.getElementById(click);
+        let marubatsu = false;
+        let seikai = "不正解"
+        if (click==="A"){
+            marubatsu = true;
+            seikai = "正解";
+        }
+        answerElement.setAttribute("class", marubatsu);
+        answerElement.textContent = seikai;
+        for(const btn of button){
+            if(btn !== click){
+            removeAnswer(btn);
+            }
+        }
+    }
+)}
+
+        button.map((n)=>clickButton(n))
+
+</script>
+
+</html>

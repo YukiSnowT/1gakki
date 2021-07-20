@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>テキストメーカー ～ Text Maker</title>
+</head>
+<body>
+    <h2>テキストファイルメーカー</h2>
+    <p>書いた内容をテキストファイルにして出力します。</p>
+    <p><label><br><input type="text" name = "file_name" id="file_name" placeholder="ここにタイトルを入力"></label></p>
+    <p><label><br><textarea name="file_main" id="file_main" cols="30" rows="10" placeholder="ここにテキストを入力"></textarea></label></p>
+    <h3></h3>
+</body>
+<script>
+
+let name_value = "無題";
+let main_value = null;
+
+
+const name = document.getElementById("file_name");
+const main = document.getElementById("file_main");
+    
+const filingName = (e) =>{
+    name_value = e.target.value;
+    filling();
+} 
+
+const filingMain = (e) =>{
+    main_value = e.target.value;
+    filling();
+} 
+
+const filling = () =>{
+
+    let x =document.querySelector("h3")
+    while(x.lastChild){
+        x.removeChild(x.lastChild)
+    }
+    if(name_value==""){name_value = "無題"}
+    if(main_value!==null){
+        let blob = new Blob([main_value],{type:"text/plan"});
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = name_value + '.txt';
+        link.textContent = "ダウンロード"
+        document.querySelector("h3").appendChild(link);
+    }
+}
+
+
+    // link.click();
+
+    name.addEventListener("input",filingName);
+    main.addEventListener("input",filingMain);
+
+</script>
+</html>

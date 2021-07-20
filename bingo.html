@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ビンゴ ～ BINGO!</title>
+    <style>
+        #main,#sub,#bingo{
+            border: 1px solid;
+        }
+        #flexbox{
+            display: flex;
+            width: 1000px;
+            height: auto;
+            margin: auto;
+        }
+        #main{
+            width: 500px;
+        }
+        #sub{
+            width: 400px;
+        }
+        #title_bingo{
+            margin: 20px 44px 0 44px;
+            height: 40px;
+            border: 1px solid;
+            text-align: center;
+            font-size: 2em;
+        }
+        #bingo{
+            display: flex;
+            flex-wrap: wrap;
+            width: 410px;
+            height: 410px;
+            margin: auto;
+            
+        }
+        #A, #B, #C, #D, #E, #F, #G, #H, #I, #J, #K, #L, #M, #N, #O, #P, #Q, #R, #S, #T, #U, #V, #W, #X, #Y,#bingoclear {
+            width: 80px;
+            height: 80px;
+            border: 1px solid gray;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            font-size: 3.4em;
+        }
+        
+        #mashine{
+            border: 3px solid black;
+            border-radius: 130px;
+            width: 300px;
+            height: 255px;
+            margin:40px auto;
+            text-align: center;
+            font-size: 150px;
+            padding-top: 45px;
+        }
+        #button{
+            border: 5px outset orangered;
+            background-color: orange;
+            width: 200px;
+            height: 50px;
+            margin: auto;
+            text-align: center;
+            font-size: 2.2em;
+            cursor: pointer;
+        }
+        #button:active{
+            border: 5px inset orangered;
+            background-color: orange;
+        }
+        #result{
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            border: 1px solid;
+            margin: 40px auto;
+            padding-bottom: 10px;
+            height: auto;
+            width: 350px;
+            font-size: 2em;
+        }
+        #resultnum,#resultnumg{
+            width: 55px;
+            height: 50px;
+            border: 1px solid black;
+            border-radius: 30px;
+            text-align: center;
+            margin: 10px 0 0 10px;
+            padding-top: 5px;
+        }
+        #resultnumg{
+            color: red;
+        }
+        #marker{
+            width: 0;
+            height: 0;
+        }
+        #clear{
+            font-size: 2.5em;
+            text-align: center;
+            margin-top: 10px;
+            background-color: purple;
+            color: white;
+        }
+        #rearch{
+            font-size: 2.5em;
+            text-align: center;
+            margin-top: 10px;
+            color: red;
+        }
+        .red{
+            color: red;
+            border: black;
+        }
+        .get{
+            background-color: aquamarine;
+            color: red;
+        }
+        #bingoclear{
+            background-color: red;
+            color: white;
+        }
+        #M.center{
+            font-size: 2em;
+            font-weight: bold;
+            height: 65px;
+            padding-top: 15px;
+            color: red;;
+            background-color: yellow
+        }
+
+    </style>
+</head>
+
+<body onselectstart="return false;">
+    <div id="head">
+        <h1>BINGO!</h1>
+        <p>ビンゴゲーム。STARTを押して抽選開始、STOPを押して数字を決定。</p>
+    </div>
+    <div id="flexbox">
+        <div id="main">
+            <div id="title_bingo">B　　I　　N　　G　　O</div>
+            <div id="bingo"></div>
+            <div id="rearch"></div>
+        </div>
+        <div id="sub">
+            <div id="title_mashine"></div>
+            <div id="mashine">??</div>
+            <div id="button">START</div>
+            <div id="result">
+                <div id="marker"></div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+
+    //グローバル変数の定義
+    const bingo_id = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y"];
+    let loop = false;
+    let loopfun = null;
+    let bingonum = [1,2,3,4,5,16,17,18,19,20,31,32,33,34,35,46,47,48,49,50,61,62,63,64,65];
+    let bingocheck = [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]
+    let getnum = [　];
+    let lastnum = 0;
+    let clearcheck = true;
+    let count = 0;
+    let rearchcount = Array(12).fill(0);
+        const columnA = Array(5).fill(0);
+        const columnB = Array(5).fill(0);
+        const columnC = Array(5).fill(0);
+        const columnD = Array(5).fill(0);
+        const columnE = Array(5).fill(0);
+        const rowA = Array(5).fill(0);
+        const rowB = Array(5).fill(0);
+        const rowC = Array(5).fill(0);
+        const rowD = Array(5).fill(0);
+        const rowE = Array(5).fill(0);
+        const diagonalA = Array(5).fill(0);
+        const diagonalB = Array(5).fill(0);
+        
+
+    //いつものマス目作り
+    // function createBingo2(block){
+    //     const n = document.createElement("div");
+    //     n.setAttribute("id", block);
+    //     n.textContent=bingo_id[0];
+    //     document.querySelector("#bingo").appendChild(n);
+    // }
+
+    //ランダムに数字を代入するのでいつもと違うマス目作り
+    function createBingo(){
+        for(i=0;i<5;i++){
+            for(j=0;j<5;j++){
+                let r=(Math.round( Math.random()*14 )+1)+15*i;
+                while(bingonum.some((n)=> n==r)){
+                    r=(Math.round( Math.random()*14 )+1)+15*i;
+                }
+                bingonum[i*5+j]=r;
+            }
+        }
+        changeBingonum();
+        bingonum[12]="Free"
+        for(i=0;i<25;i++){
+            const n = document.createElement("div");
+            n.setAttribute("id", bingo_id[i]);
+            n.textContent=bingonum[i];
+            document.querySelector("#bingo").appendChild(n);
+        }
+        document.getElementById("M").setAttribute("class","center");
+    }
+
+    //bingonumがこのままじゃ使えないので入れ替え
+    function changeBingonum(){
+        changeNum(1,5);
+        changeNum(2,10);
+        changeNum(3,15);
+        changeNum(4,20);
+        changeNum(7,11);
+        changeNum(8,16);
+        changeNum(9,21);
+        changeNum(13,17);
+        changeNum(14,22);
+        changeNum(19,23);
+    }
+
+    function changeNum(i,j){
+        const r = bingonum[i];
+        bingonum[i] = bingonum[j]
+        bingonum[j] = r;
+    }
+
+    //ビンゴマシーンの演出
+    function loopMashine(){
+        const rnd = Math.round( Math.random()*74 )+1;
+        document.getElementById("mashine").textContent = rnd;
+    }
+
+    //番号の排出
+    function stopMashine(){
+       
+        document.getElementById("mashine").removeAttribute("class");
+        let rnd = Math.round( Math.random()*74 )+1;
+        while(getnum.some((m) => m==rnd)){
+            rnd = Math.round( Math.random()*74 )+1;
+        }
+        if(bingonum.some((n) => n==rnd)){
+            document.getElementById("mashine").setAttribute("class" , "red");
+        }
+        getnum.push(rnd);
+        count++;
+
+        return rnd;
+    
+    }
+
+    //番号の合致表示
+    function checkNum(){
+        for(i=0;i<25;i++){
+            if(lastnum==bingonum[i]){
+                document.getElementById(bingo_id[i]).setAttribute("class","get");
+                bingocheck[i]=1;
+            }
+        }
+    }
+
+    //番号の結果表示
+    function resultNum(){
+        const n =document.createElement("div");
+        if(bingonum.some((n) => n==lastnum)){
+            n.setAttribute("id", "resultnumg");
+        }else{
+            n.setAttribute("id", "resultnum");
+        }
+        n.textContent = lastnum;
+        //marker（常に先頭）の次の要素を取得してその前に代入
+        document.querySelector("#result").insertBefore(n,document.querySelector("#marker").nextSibling);
+    }
+
+    //ビンゴスタート
+    function clickButton(){
+        
+        document.getElementById("button").addEventListener("click",function() {
+            if(clearcheck){
+                if(loop){
+                    clearInterval(loopfun);
+                    document.getElementById("button").textContent = "START";
+                    lastnum = stopMashine();
+                    document.getElementById("mashine").textContent = lastnum;
+                    loop = false;
+                    resultNum();
+                    checkNum();
+                    checkClear();
+                }else{
+                    document.getElementById("mashine").removeAttribute("class");
+                    loopfun = setInterval("loopMashine()",1000/15);
+                    document.getElementById("button").textContent = "STOP";
+                    loop = true;
+                }
+            }else{
+                location.reload();
+            }
+        })
+    }
+
+    //クリアチェック
+    function checkClear(){
+        for(i=0;i<5;i++){
+            columnA[i] = bingocheck[i*5];
+            columnB[i] = bingocheck[i*5+1];
+            columnC[i] = bingocheck[i*5+2];
+            columnD[i] = bingocheck[i*5+3];
+            columnE[i] = bingocheck[i*5+4];
+            rowA[i]=bingocheck[i];
+            rowB[i]=bingocheck[i+5];
+            rowC[i]=bingocheck[i+10];
+            rowD[i]=bingocheck[i+15];
+            rowE[i]=bingocheck[i+20];
+            diagonalA[i]=bingocheck[i*6];
+            diagonalB[i]=bingocheck[(i+1)*4];
+        }
+        const clearoosugi = [columnA,columnB,columnC,columnD,columnE,rowA,rowB,rowC,rowD,rowE,diagonalA,diagonalB];
+        for(i=0;i<12;i++){
+            checkRearchmain(clearoosugi[i],i);
+        }
+        clearoosugi.map((n)=>checkClearmain(n));
+        // checkClearmain(columnA);
+        // checkClearmain(columnB);
+        // checkClearmain(columnC);
+        // checkClearmain(columnD);
+        // checkClearmain(columnE);
+        // checkClearmain(rowA);
+        // checkClearmain(rowB);
+        // checkClearmain(rowC);
+        // checkClearmain(rowD);
+        // checkClearmain(rowE);
+        // checkClearmain(diagonalA);
+        // checkClearmain(diagonalB);
+    }
+
+    function checkClearmain(check){
+        if(check.every((n) => n===1)){
+            clearcheck = false;
+            document.getElementById("rearch").setAttribute("id","clear");
+            document.getElementById("clear").textContent = "BINGO! 記録：" + count + "回";
+            document.getElementById("button").textContent = "RETRY?"
+            // bingoColor(check);
+        }
+    }
+    function checkRearchmain(check,i){
+        if(check[0]+check[1]+check[2]+check[3]+check[4]===4){
+            rearchcount[i]=1;
+            let sum = 0;
+            for(j=0;j<12;j++){
+                sum=sum+rearchcount[j];
+            }
+            if(sum === 1){
+                document.getElementById("rearch").textContent = "リーチ！"
+            }else if (sum === 2){
+                document.getElementById("rearch").textContent = "ダブルリーチ！！"
+            }else if (sum === 3){
+                document.getElementById("rearch").textContent = "トリプルリーチ！！！"
+            }else if (sum > 3){
+                document.getElementById("rearch").textContent = "ビンゴ目前！！！！"
+            }
+        }
+    }
+    // function bingoColor(check){
+    //     for(i=0;i<5;i++){
+    //         if(check === columnA){document.getElementById[bingo_id[i*5]].setAttribute("id","bingoclear");}
+    //         else if(check === columnB){document.getElementById[bingo_id[i*5+1]].setAttribute("id","bingoclear");}
+    //         else if(check === columnC){document.getElementById[bingo_id[i*5+2]].setAttribute("id","bingoclear");}
+    //         else if(check === columnD){document.getElementById[bingo_id[i*5+3]].setAttribute("id","bingoclear");}
+    //         else if(check === columnE){document.getElementById[bingo_id[i*5+4]].setAttribute("id","bingoclear");}
+    //         else if(check === rowA){document.getElementById[bingo_id[i]].setAttribute("id","bingoclear");}
+    //         else if(check === rowB){document.getElementById[bingo_id[i+5]].setAttribute("id","bingoclear");}
+    //         else if(check === rowC){document.getElementById[bingo_id[i+10]].setAttribute("id","bingoclear");}
+    //         else if(check === rowD){document.getElementById[bingo_id[i+15]].setAttribute("id","bingoclear");}
+    //         else if(check === rowE){document.getElementById[bingo_id[i+20]].setAttribute("id","bingoclear");}
+    //         else if(check === diagonalA){document.getElementById[bingo_id[i*6]].setAttribute("id","bingoclear");}
+    //         else if(check === diagonalB){document.getElementById[bingo_id[(i+1)*4]].setAttribute("id","bingoclear");}
+    //     }
+    // }
+
+    createBingo();
+    clickButton();
+</script>
+</html>

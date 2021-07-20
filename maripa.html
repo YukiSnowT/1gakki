@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+
+
+    #main {
+        display: flex;
+        width: 1000px;
+        flex-wrap: wrap;
+        margin: auto;
+    }
+
+    #board {
+        display: block;
+        background-color: #ddd;
+        margin: auto;
+    }
+
+    #dice {
+        background-color: #ddd;
+        margin: auto;
+    }
+
+    #message {
+        background-color: #ddd;
+        margin: auto;
+    }
+</style>
+
+<body>
+    <div id="main">
+        <canvas id="board" width="1000" height="740"></canvas>
+        <canvas id="dice" width="260" height="260"></canvas>
+        <canvas id="message" width="740" height="260"></canvas>
+    </div>
+</body>
+<script>
+    //グローバル変数の定義
+
+    const canvas = document.getElementById("board");
+    const ctxMain = canvas.getContext("2d");
+    const canvasDice = document.getElementById("dice");
+    const ctxDice = canvasDice.getContext("2d");
+    const canvasMessage = document.getElementById("message");
+    const ctxMessage = canvasMessage.getContext("2d");
+
+    let playNum = 4;
+    let gameStart = true;
+    let gameEnd = false;
+    let diceroll = 0;
+    let masutype = Array(34).fill(0);
+    let moveCount = 0;
+    let moveStop = [];
+    let movekey = null;
+    let movedice = null;
+    let diceLoopCount = 0;
+    let deme = 0;
+    let demeNow = 0;
+    let goBack = true;
+    let eventState = 0;
+    let stopToStop = false;
+    let lastMoveUpDown = false;
+
+    const player = class {
+        constructor(x, y, color, rank, goPoint, goAble, turn, number) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.rank = rank;
+            this.goPoint = goPoint;
+            this.goAble = goAble;
+            this.turn = turn;
+            this.number = number;
+        }
+        display(ctx) {
+            ctx.fillStyle = this.color;
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 5;
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y - 10);
+            ctx.arc(this.x, this.y - 30, 60, (Math.PI / 180 * 75), (Math.PI / 180 * 105));
+            ctx.fill();
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(this.x, this.y - 15, 15, 0, (Math.PI * 2));
+            ctx.fill();
+            ctx.closePath();
+            ctx.stroke();
+        }
+        check(go) {
+            if ((this.y === 600 && this.x !== 50) || (this.y === 420 && this.x !== 50)) {
+                this.goAble[3] = 1;
+            } else if ((this.y === 330 && this.x !== 680 && this.x > 500) || (this.y === 150 && this.x !== 50)) {
+                this.goAble[3] = -1
+            } else {
+                this.goAble[3] = 0
+            }
+            if ((this.x === 680 && this.y !== 330 && this.y < 400) || (this.x === 950)) {
+                this.goAble[2] = 1;
+            } else if ((this.x === 320 && this.y !== 600 && this.y > 400) || (this.x === 50 && this.y !== 600)) {
+                this.goAble[2] = -1
+            } else {
+                this.goAble[2] = 0
+            }
+            if ((this.y === 600 && this.x !== 680) || (this.y === 420 && this.x !== 320 && this.x < 500)) {
+                this.goAble[1] = -1;
+            } else if ((this.y === 330 && this.x !== 950 && this.x > 500) || (this.y === 150 && this.x !== 950)) {
+                this.goAble[1] = 1
+            } else {
+                this.goAble[1] = 0
+            }
+            if ((this.x === 680 && this.y !== 150 && this.y < 400) || (this.x === 950 && this.y !== 150)) {
+                this.goAble[0] = -1;
+            } else if ((this.x === 320 && this.y !== 420 && this.y > 420) || (this.x === 50 && this.y !== 150)) {
+                this.goAble[0] = 1
+            } else {
+                this.goAble[0] = 0
+            }
+            if (!go) {
+                this.goAble[0] *= -1;
+                this.goAble[1] *= -1;
+                this.goAble[2] *= -1;
+                this.goAble[3] *= -1;
+            }
+        }
+    }
+
+    const masu = class {
+        constructor(x, y, size, type) { //0で白、1で青(2マス進む）、2で赤(2マス戻る)、3で濃赤(5マス戻る)
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.type = type;
+        }
+        display(ctx) {
+            if (this.type === 0) { ctx.fillStyle = "#fff" }
+            else if (this.type === 1) { ctx.fillStyle = "#59f" }
+            else if (this.type === 2) { ctx.fillStyle = "#f63" }
+            else if (this.type === 3) { ctx.fillStyle = "#a1a" }
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 3;
+            // ctx.fillRect(this.x,this.y,this.size,this.size);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, (Math.PI * 2));
+            ctx.fill();
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+
+    const p1 = new player(680, 600, "red", 1, 0, [1, 1, 1, 1], true, "１")
+    const p2 = new player(760, 600, "blue", 1, 0, [1, 1, 1, 1], true, "２")
+    const p3 = new player(680, 680, "green", 1, 0, [1, 1, 1, 1], true, "３")
+    const p4 = new player(760, 680, "orange", 1, 0, [1, 1, 1, 1], true, "４")
+    let nowPlay = p1;
+    let nextPlay = p2;
+
+    //マスのランダム並び替え配置
+    const rndPushMasuType = (array) => {
+        for (i = 0; i < array.length; i++) {
+            const n = Math.floor(Math.random() * 100)
+            if (n % 20 === 0) { array[i] = 3 }
+            else if (n % 4 === 0) { array[i] = 2 }
+            else if (n % 4 === 1) { array[i] = 1 }
+            else { array[i] = 0 }
+        }
+    }
+
+    //マップの描画
+    const displayMap = () => {
+        ctxMain.clearRect(0, 0, 1000, 740)
+        for (i = 0; i < 11; i++) {
+            new masu(90 * i + 50, 170, 35, masutype[i + 11]).display(ctxMain);
+        }
+        for (i = 0; i < 7; i++) {
+            new masu(90 * i + 50, 620, 35, masutype[6 - i]).display(ctxMain);
+        }
+        for (i = 0; i < 5; i++) {
+            new masu(50, i * 90 + 260, 35, masutype[10 - i]).display(ctxMain);
+        }
+        for (i = 0; i < 4; i++) {
+            new masu(950, i * 90 + 260, 35, masutype[22 + i]).display(ctxMain);
+        }
+        for (i = 0; i < 3; i++) {
+            new masu(90 * i + 140, 440, 35, masutype[29 - i]).display(ctxMain);
+        }
+        new masu(320, 530, 35, masutype[26]).display(ctxMain);
+        for (i = 0; i < 3; i++) {
+            new masu(90 * i + 680, 350, 35, masutype[31 + i]).display(ctxMain);
+        }
+        new masu(680, 260, 35, masutype[30]).display(ctxMain);
+        displayMessage(640, 580, 160, 150, "　　　　　　 START", 33, 6, "yellow", "firebrick", "gray", ctxMain);
+        displayMessage(820, 580, 160, 150, "　　　　　　　 GOAL", 35, 7, "yellow", "firebrick", "gray", ctxMain)
+        displayYajirushiLeft(580, 550, "orange", 25, ctxMain);
+        displayYajirushiDown(880, 550, "orange", 25, ctxMain);
+        displayYajirushiRight(230, 230, "orange", 25, ctxMain);
+        displayYajirushiLeft(225, 675, "purple", 20, ctxMain);
+        displayYajirushiUp(375, 520, "purple", 20, ctxMain);
+        displayYajirushiDown(620, 325, "purple", 20, ctxMain);
+        displayYajirushiRight(790, 235, "purple", 20, ctxMain);
+        displayRank();
+        ctxMain.fillStyle = "#ffb"
+        ctxMain.strokeRect(380, 300, 200, 160)
+        ctxMain.fillRect(380, 300, 200, 160)
+        ctxMain.fillStyle = "black"
+        ctxMain.fillText("：2マス進む", 430, 335)
+        ctxMain.fillText("：2マス戻る", 430, 385)
+        ctxMain.fillText("：5マス戻る", 430, 435)
+        new masu(410, 330, 20, 1).display(ctxMain);
+        new masu(410, 380, 20, 2).display(ctxMain);
+        new masu(410, 430, 20, 3).display(ctxMain);
+    }
+
+    //矢印の描画
+    const displayYajirushiLeft = (x, y, color, size, ctx) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y)
+        ctx.lineTo(x + size * 1.5, y - size)
+        ctx.lineTo(x + size * 1.5, y + size)
+        ctx.fill();
+        ctx.fillRect(x + size * 1.5, y - size / 2, size * 1.5, size)
+    }
+
+    const displayYajirushiRight = (x, y, color, size, ctx) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y)
+        ctx.lineTo(x - size * 1.5, y - size)
+        ctx.lineTo(x - size * 1.5, y + size)
+        ctx.fill();
+        ctx.fillRect(x - size * 3, y - size / 2, size * 1.5, size)
+    }
+
+    const displayYajirushiUp = (x, y, color, size, ctx) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y)
+        ctx.lineTo(x - size, y + size * 1.5)
+        ctx.lineTo(x + size, y + size * 1.5)
+        ctx.fill();
+        ctx.fillRect(x - size / 2, y + size * 1.5, size, size * 1.5)
+    }
+
+    const displayYajirushiDown = (x, y, color, size, ctx) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y)
+        ctx.lineTo(x - size, y - size * 1.5)
+        ctx.lineTo(x + size, y - size * 1.5)
+        ctx.fill();
+        ctx.fillRect(x - size / 2, y - size * 3, size, size * 1.5)
+    }
+
+    //メッセージ表示
+    //displayMessage(5,5,730,250,"テストメッセージ",30,23,"black","white","white",ctxMessage)
+    const displayMessage = (x, y, wid, hei, text, textsize, kaigyo, backcolor, textcolor, tablecolor, ctx) => {
+        ctx.clearRect(x - 10, y - 10, wid + 20, hei + 20);
+        ctx.strokeStyle = tablecolor;
+        ctx.fillStyle = backcolor;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 10;
+        ctx.fillRect(x, y, wid, hei);
+        ctx.strokeRect(x, y, wid, hei);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - 4, y - 4, wid + 8, hei + 8);
+        ctx.strokeRect(x - 4, y - 4, wid + 8, hei + 8);
+        ctx.fillStyle = textcolor;
+        ctx.font = "bold " + textsize + "px center";
+        if (text.length < kaigyo + 1) {
+            ctx.fillText(text, x + 15, y + textsize + 10)
+        } else {
+            ctx.fillText(text.substr(0, kaigyo), x + 15, y + textsize + 10)
+            if (text.length < kaigyo * 2 + 1) {
+                ctx.fillText(text.substr(kaigyo), x + 15, y + (textsize + 10) * 2)
+            } else {
+                ctx.fillText(text.substr(kaigyo, kaigyo), x + 15, y + (textsize + 10) * 2)
+                if (text.length < kaigyo * 3 + 1) {
+                    ctx.fillText(text.substr(kaigyo * 2), x + 15, y + (textsize + 10) * 3)
+                } else {
+                    ctx.fillText(text.substr(kaigyo * 2, kaigyo), x + 15, y + (textsize + 10) * 3)
+                    if (text.length < kaigyo * 4 + 1) {
+                        ctx.fillText(text.substr(kaigyo * 3), x + 15, y + (textsize + 10) * 4)
+                    } else {
+                        ctx.fillText(text.substr(kaigyo * 3, kaigyo), x + 15, y + (textsize + 10) * 4)
+                        if (text.length < kaigyo * 5 + 1) {
+                            ctx.fillText(text.substr(kaigyo * 4), x + 15, y + (textsize + 10) * 5)
+                        } else {
+                            ctx.fillText(text.substr(kaigyo * 4, kaigyo), x + 15, y + (textsize + 10) * 5)
+                            ctx.fillText(text.substr(kaigyo * 5, kaigyo), x + 15, y + (textsize + 10) * 6)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //プレイヤーのステータス描画処理
+    const displayRank = () => {
+        changeRunk();
+        displayMessage(15, 15, 230, 100, "１Ｐ　現在 " + p1.rank + "位残り" + (27 - p1.goPoint) + "マス", 24, 8, "red", "white", "white", ctxMain)
+        displayMessage(260, 15, 230, 100, "２Ｐ　現在 " + p2.rank + "位残り" + (27 - p2.goPoint) + "マス", 24, 8, "blue", "white", "white", ctxMain)
+        displayMessage(505, 15, 230, 100, "３Ｐ　現在 " + p3.rank + "位残り" + (27 - p3.goPoint) + "マス", 24, 8, "green", "white", "white", ctxMain)
+        displayMessage(755, 15, 230, 100, "４Ｐ　現在 " + p4.rank + "位残り" + (27 - p4.goPoint) + "マス", 24, 8, "orange", "white", "white", ctxMain)
+    }
+
+    //ダイスをランダムに動かす処理。
+    //setInterval("randomDice(30,30,200,Math.floor(Math.random()*6+1),ctxDice)",1000/10)
+    const randomDice = (x, y, size, number, ctx) => {
+        let sub1 = Math.floor(Math.random() * 6 + 1);
+        while (sub1 == x || sub1 == 7 - x) {
+            sub1 = Math.floor(Math.random() * 6 + 1);
+        }
+        let sub2 = Math.floor(Math.random() * 6 + 1);
+        while (sub2 == x || sub2 == 7 - x || sub2 == sub1 || sub2 == 7 - sub1) {
+            sub2 = Math.floor(Math.random() * 6 + 1);
+        }
+        displayDice1(x, y, size, number, sub1, sub2, ctx);
+        ctx.translate(130, 130);
+        ctx.rotate(Math.PI / 180 * 50);
+        if (diceLoopCount < 35) { diceLoopCount++; }
+        else { diceLoopCount = 0; }
+        ctx.translate(-130, -130);
+    }
+
+    const displayDice1 = (x, y, size, number1, number2, number3, ctx) => {
+        ctx.clearRect(x - 40, y - 40, size + 80, size + 80);
+        ctx.strokeStyle = "black";
+        ctx.fillStyle = "white";
+        ctx.lineWidth = 16;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size, y + size / 5);
+        ctx.lineTo(x + size, y + size / 5 * 4);
+        ctx.lineTo(x + size / 2, y + size);
+        ctx.lineTo(x, y + size / 5 * 4);
+        ctx.lineTo(x, y + size / 5);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fill();
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(x + size, y + size / 5);
+        ctx.lineTo(x + size / 2, y + size / 5 * 2);
+        ctx.lineTo(x, y + size / 5);
+        ctx.moveTo(x + size / 2, y + size / 5 * 2);
+        ctx.lineTo(x + size / 2, y + size);
+        ctx.stroke();
+        displayDice1Top(x, y, size, number1, ctx);
+        displayDice1Side1(x, y, size, number2, ctx);
+        displayDice1Side2(x, y, size, number3, ctx);
+    }
+
+    const displayDice1Top = (x, y, size, number, ctx) => {
+        ctx.fillStyle = "#444";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 6;
+        if (number === 1) {
+            ctx.fillStyle = "red";
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 5, size / 8, size / 20, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 2) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 3) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 4) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 10, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 10 * 3, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 5) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 10, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 10 * 3, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 6) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 5, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 5 * 4, y + size / 5, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 14, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 2, y + size / 19 * 6, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 20 * 7, y + size / 140 * 19, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 20 * 13, y + size / 190 * 49, size / 12, size / 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        }
+    }
+
+    const displayDice1Side1 = (x, y, size, number, ctx) => {
+        ctx.fillStyle = "#444";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 4;
+        if (number === 1) {
+            ctx.fillStyle = "red";
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5 * 3, size / 10, size / 8, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 2) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 3) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5 * 3, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 4) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 10 * 5, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 10 * 7, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 5) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 10 * 5, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 10 * 7, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4, y + size / 5 * 3, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 6) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 11 * 4, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 13 * 11, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 15 * 7, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 4 * 3, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8, y + size / 88 * 49, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 3, y + size / 195 * 128, size / 15, size / 12, Math.PI / 180 * 150, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        }
+    }
+
+    const displayDice1Side2 = (x, y, size, number, ctx) => {
+        ctx.fillStyle = "#444";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 4;
+        if (number === 1) {
+            ctx.fillStyle = "red";
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5 * 3, size / 10, size / 8, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 2) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 3) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5 * 3, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 4) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 10 * 5, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 10 * 7, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 5) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 5 * 2, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 5 * 4, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 10 * 5, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 10 * 7, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 4 * 3, y + size / 5 * 3, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        } else if (number === 6) {
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 11 * 4, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 13 * 11, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 15 * 7, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 4 * 3, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 7, y + size / 88 * 49, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size / 8 * 5, y + size / 195 * 128, size / 15, size / 12, Math.PI / 180 * 30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+        }
+    }
+
+    //現在順位判定
+    const changeRunk = () => {
+        const x = [p1.goPoint, p2.goPoint, p3.goPoint, p4.goPoint];
+        let y = [0, 0, 0, 0];
+        let z = 0;
+        let w = 1;
+        for (i = 27; i >= 0; i--) {
+            for (j = 0; j < 4; j++) {
+                if (x[j] === i) {
+                    y[j] = w;
+                    z++;
+                }
+            }
+            w += z;
+            z = 0;
+        }
+        p1.rank = y[0];
+        p2.rank = y[1];
+        p3.rank = y[2];
+        p4.rank = y[3];
+    }
+
+    //プレイヤー矢印の描画
+    const displayNowPlayer = (ctx) => {
+        ctx.fillStyle = "lime";
+        ctx.strokeStyle = "black"
+        ctx.beginPath();
+        ctx.moveTo(nowPlay.x, nowPlay.y - 40);
+        ctx.lineTo(nowPlay.x + 20, nowPlay.y - 60)
+        ctx.lineTo(nowPlay.x - 20, nowPlay.y - 60)
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    //プレイヤー交代処理
+    const changePlayer = () => {
+        if (nowPlay === p1) {
+            nowPlay = p2;
+            nextPlay = p3;
+        } else if (nowPlay === p2) {
+            nowPlay = p3;
+            nextPlay = p4;
+        } else if (nowPlay === p3) {
+            nowPlay = p4;
+            nextPlay = p1;
+        } else if (nowPlay === p4) {
+            nowPlay = p1;
+            nextPlay = p2;
+        }
+    }
+
+    //青マス処理（既定のマス進む）
+    const stopBlue = (x) => {
+        demeNow = x;
+        eventState = -x;
+    }
+
+    //赤マス処理（既定のマス戻る）
+    const stopRed = (x) => {
+        goBack = false;
+        demeNow = x;
+        eventState = -30 - x;
+    }
+
+    //止まったマスの色のチェック
+    //eventStateにそのまま代入する
+    const stopMasucheck = () => {
+        let x = 0;
+        if (eventState > -1) {
+            if (nowPlay.goPoint < 5 || (nowPlay.goPoint > 8 && nowPlay.goPoint < 20) || (nowPlay.goPoint > 23 && nowPlay.goPoint < 27)) {
+                x = masutype[nowPlay.goPoint - 1];
+            } else {
+                if (nowPlay.goPoint === 5) {
+                    if (lastMoveUpDown) {
+                        x = masutype[26];
+                    } else {
+                        x = masutype[4];
+                    }
+                } else if (nowPlay.goPoint === 6) {
+                    if (nowPlay.y < 550) {
+                        x = masutype[27];
+                    } else {
+                        x = masutype[5];
+                    }
+                } else if (nowPlay.goPoint === 7) {
+                    if (nowPlay.y < 550) {
+                        x = masutype[28];
+                    } else {
+                        x = masutype[6];
+                    }
+                } else if (nowPlay.goPoint === 8) {
+                    if (nowPlay.y < 460) {
+                        x = masutype[29];
+                    } else {
+                        x = masutype[7];
+                    }
+                } else if (nowPlay.goPoint === 20) {
+                    if (lastMoveUpDown) {
+                        x = masutype[30];
+                    } else {
+                        x = masutype[19];
+                    }
+                } else if (nowPlay.goPoint === 21) {
+                    if (nowPlay.y > 200) {
+                        x = masutype[31];
+                    } else {
+                        x = masutype[20];
+                    }
+                } else if (nowPlay.goPoint === 22) {
+                    if (nowPlay.y > 200) {
+                        x = masutype[32];
+                    } else {
+                        x = masutype[21];
+                    }
+                } else if (nowPlay.goPoint === 23) {
+                    if (nowPlay.y > 290) {
+                        x = masutype[33];
+                    } else {
+                        x = masutype[22];
+                    }
+                }
+            }
+        }
+        return x;
+    }
+
+    //キャラを１マス動かす処理
+    const moveEvent = (e, who) => {
+        if (moveCount < 90 && who.turn) {
+            if (e === "ArrowLeft" && who.goAble[3] === 1) {
+                moveCount += 6;
+                who.x -= 6;
+                if (moveCount < 45) { who.y -= 2 }
+                else { who.y += 2 }
+            } else if (e === "ArrowRight" && who.goAble[1] === 1) {
+                moveCount += 6;
+                who.x += 6;
+                if (moveCount < 45) { who.y -= 2 }
+                else { who.y += 2 }
+            } else if (e === "ArrowUp" && who.goAble[0] === 1) {
+                moveCount += 6;
+                who.y -= 6;
+                if (moveCount < 45) { who.x += 2 }
+                else { who.x -= 2 }
+            } else if (e === "ArrowDown" && who.goAble[2] === 1) {
+                moveCount += 6;
+                who.y += 6;
+                if (moveCount < 45) { who.x += 2 }
+                else { who.x -= 2 }
+            } else {
+                if (moveStop.length > 0) {
+                    clearInterval(moveStop.shift());
+                }
+                stopToStop = true;
+                moveCount = 0;
+            }
+            displayMap();
+            p1.display(ctxMain)
+            p2.display(ctxMain)
+            p3.display(ctxMain)
+            p4.display(ctxMain)
+            nowPlay.display(ctxMain);
+            displayNowPlayer(ctxMain);
+        } else {
+            if (who.x % 10 !== 0) { who.x += 2; }
+            if (who.y % 10 !== 0) { who.y -= 2; }
+            if (moveStop.length > 0) {
+                clearInterval(moveStop.shift());
+            }
+            stopToStop = true;
+            moveCount = 0;
+        }
+    }
+
+    //ゴールチェック
+    const checkGoal = () => {
+        if (nowPlay.goPoint === 27) {
+            gameEnd = true;
+            changeRunk();
+            let x = [];
+            let z = [];
+            const y = [p1.rank, p2.rank, p3.rank, p4.rank];
+            for (j = 1; j < 5; j++) {
+                for (i = 0; i < 4; i++) {
+                    if (y[i] === j) {
+                        x.push(i + 1);
+                        z.push(y[i]);
+                    }
+                }
+            }
+            displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐがゴールしました。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　★結果発表★　　　　　　　　　　　　　　" + z[0] + "位：" + x[0] + "P　　　" + z[1] + "位：" + x[1] + "P　　　　　　　　　　" + z[2] + "位：" + x[2] + "P　　　" + z[3] + "位：" + x[3] + "P", 30, 23, "black", "white", "white", ctxMessage);
+        }
+    }
+
+    //押したボタンに対して実際に動く処理
+    const move = (e) => {
+        if (demeNow > 0 && !gameEnd) {
+            if (moveCount === 0) {
+                nowPlay.check(goBack);
+                movekey = e.key;
+                if (movekey === "ArrowUp" || movekey === "ArrowDown") {
+                    lastMoveUpDown = true;
+                } else {
+                    lastMoveUpDown = false;
+                }
+                if ((movekey === "ArrowUp" && nowPlay.goAble[0] === 1) || (movekey === "ArrowRight" && nowPlay.goAble[1] === 1) || (movekey === "ArrowDown" && nowPlay.goAble[2] === 1) || (movekey === "ArrowLeft" && nowPlay.goAble[3] === 1)) {
+                    stopToStop = false;
+                    moveStop.push(test = setInterval("moveEvent(movekey,nowPlay)", 1000 / 60));
+                    demeNow--;
+                    if (eventState === 0) {
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　「 " + deme + " 」が出ました。　　　　　　　　　　　　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                        nowPlay.goPoint++;
+                    } else if (eventState === -2) {
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　青マスに止まったので「 ２ 」マス進めます。　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                        nowPlay.goPoint++;
+                    } else if (eventState === -32) {
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　赤マスに止まったので「 ２ 」マス戻ります。　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                        nowPlay.goPoint--;
+                        if (nowPlay.goPoint === 0) {
+                            demeNow = 0;
+                        }
+
+                    } else if (eventState === -35) {
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　紫マスに止まったので「 ５ 」マス戻ります。　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                        nowPlay.goPoint--;
+                        if (nowPlay.goPoint === 0) {
+                            demeNow = 0;
+                        }
+                    }
+                    if (demeNow === 0 && eventState === 0) {
+                        // while(!stopToStop){console.log("test");}
+                        eventState = stopMasucheck();
+                    }
+                    if (demeNow === 0 && eventState < 1) {
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンが終わりました。　　　　　　　　　次は" + nextPlay.number + "Ｐのターンです。　　　　　　　　　　　　ダイスをクリックしてください。", 30, 23, "black", "white", "white", ctxMessage);
+                        if (!goBack) { goBack = true; }
+                        eventState = 0;
+                    } else if (demeNow === 0 && eventState === 1) {
+                        stopBlue(2);
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　青マスに止まったので「 ２ 」マス進めます。　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                    } else if (demeNow === 0 && eventState === 2) {
+                        stopRed(2);
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　赤マスに止まったので「 ２ 」マス戻ります。　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                    } else if (demeNow === 0 && eventState === 3) {
+                        stopRed(5);
+                        displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　紫マスに止まったので「 ５ 」マス戻ります。　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + demeNow + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                    }
+                }
+                checkGoal();
+            }
+        }
+    }
+
+    displayMessage(5, 5, 730, 250, "１Ｐのターンです。　　　　　　　　　　　　　　ダイスをクリックして止めてください。", 30, 23, "black", "white", "white", ctxMessage)
+
+    rndPushMasuType(masutype);
+    masutype[3] = 0;
+    masutype[18] = 0;
+    masutype[25] = 3;
+
+    movedice = setInterval("randomDice(30,30,200,Math.floor(Math.random()*6+1),ctxDice)", 1000 / 10)
+    displayMap();
+    p1.display(ctxMain)
+    p2.display(ctxMain)
+    p3.display(ctxMain)
+    p4.display(ctxMain)
+    displayNowPlayer(ctxMain);
+
+    document.getElementById("dice").addEventListener("click", function () {
+        if (!gameEnd) {
+            if (movedice !== null) {
+                clearInterval(movedice);
+                movedice = null;
+                let xnum = Math.floor(Math.random() * 6 + 1);
+                let sub1 = Math.floor(Math.random() * 6 + 1);
+                while (sub1 == xnum || sub1 == 7 - xnum) {
+                    sub1 = Math.floor(Math.random() * 6 + 1);
+                }
+                let sub2 = Math.floor(Math.random() * 6 + 1);
+                while (sub2 == xnum || sub2 == 7 - xnum || sub2 == sub1 || sub2 == 7 - sub1) {
+                    sub2 = Math.floor(Math.random() * 6 + 1);
+                }
+                ctxDice.translate(130, 130);
+                for (; diceLoopCount !== 41; diceLoopCount++) {
+                    ctxDice.rotate(Math.PI / 180 * 50);
+                }
+                ctxDice.translate(-130, -130);
+                displayDice1(30, 30, 200, xnum, sub1, sub2, ctxDice);
+                deme = sub2;
+                displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　「 " + deme + " 」が出ました。　　　　　　　　　　　　矢印キーで進んでください。　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　残り「 " + deme + " 」マス", 30, 23, "black", "white", "white", ctxMessage);
+                demeNow = deme;
+                document.addEventListener("keydown", move)
+
+
+            } else if (demeNow === 0) {
+                ctxDice.translate(130, 130);
+                for (; diceLoopCount !== 72; diceLoopCount++) {
+                    ctxDice.rotate(Math.PI / 180 * 50);
+                }
+                ctxDice.translate(-130, -130);
+                diceLoopCount = 0;
+                if (moveStop.length > 0) {
+                    clearInterval(moveStop.shift());
+                }
+                stopToStop = true;
+                changePlayer();
+                if (nowPlay.goPoint === 0) {
+                    nowPlay.x = 680;
+                    nowPlay.y = 600;
+                }
+                displayMap();
+                p1.display(ctxMain);
+                p2.display(ctxMain);
+                p3.display(ctxMain);
+                p4.display(ctxMain);
+                displayNowPlayer(ctxMain);
+                nowPlay.display(ctxMain);
+                displayMessage(5, 5, 730, 250, nowPlay.number + "Ｐのターンです。　　　　　　　　　　　　　　ダイスをクリックして止めてください。", 30, 23, "black", "white", "white", ctxMessage);
+                movedice = setInterval("randomDice(30,30,200,Math.floor(Math.random()*6+1),ctxDice)", 1000 / 10)
+
+                document.removeEventListener("keydown", move)
+            }
+        }
+    })
+
+    // const moveTime = (p) => {
+    //     p.check(true);
+    // }
+
+</script>
+
+</html>

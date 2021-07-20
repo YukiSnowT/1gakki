@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="jp">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three</title>
+    <style>
+        .main {
+            display: flex;
+            width: 606px;
+            height: 606px;
+            padding: 0;
+            border: 3px solid;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            flex-wrap: wrap;
+        }
+
+        #A,
+        #B,
+        #C,
+        #D,
+        #E,
+        #F,
+        #G,
+        #H,
+        #I {
+            width: 200px;
+            height: 200px;
+            border: 1px solid;
+            padding: 0;
+            margin: 0;
+
+        }
+
+        p {
+            font-size: 370%;
+            padding-top: 0;
+            text-align: center;
+        }
+
+        .get {
+            background-color: red;
+            color: white;
+            font-size: 370%;
+            text-align: center;
+        }
+
+        .unget {
+            background-color: blue;
+            color: white;
+            font-size: 370%;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="head">
+        <h1>test</h1>
+    </div>
+    <div class="main">
+        <div id="A">
+            <p>■</p>
+        </div>
+        <div id="B">
+            <p>■</p>
+        </div>
+        <div id="C">
+            <p>■</p>
+        </div>
+        <div id="D">
+            <p>■</p>
+        </div>
+        <div id="E">
+            <p>■</p>
+        </div>
+        <div id="F">
+            <p>■</p>
+        </div>
+        <div id="G">
+            <p>■</p>
+        </div>
+        <div id="H">
+            <p>■</p>
+        </div>
+        <div id="I">
+            <p>■</p>
+        </div>
+    </div>
+    <div class="shohai">test</div>
+
+</body>
+<script>
+    const number = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+    let click = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    // function clickButton(click, tu) {
+    //     console.log(tu)
+    //     const who = checkTurn(tu);
+    //     if (checkMarker(click, who) === true) {
+    //         if (who === true) {
+    //             clickButtonPlayer(click);
+    //             turn++;
+    //         } else {
+    //             clickButtonCPU(click);
+    //             turn++;
+    //         }
+    //     }
+    // }
+    function checkTurn(tu) {
+        let back = true
+        if (tu % 2 === 1) {
+            back = false;
+        }
+        return back
+    }
+    // function checkMarker(check, tof) {
+    //     let clear = true;
+    //     for (let i = 0; i < 9; i++) {
+    //         if (number[i] === check && click[i] !== 0) {
+    //             if (tof === true) {
+    //                 click[i] = 1;
+    //                 clear = false;
+    //                 break;
+    //             } else if (click[i] !== 0) {
+    //                 click[i] = 2;
+    //                 clear = false;
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     return clear;
+    // }
+
+    function clickButton(c) {
+        document.getElementById(c).addEventListener("click", function () {
+            if (turn % 2 === 0) {
+                this.setAttribute("class", "get");
+                this.textContent = "〇";
+            } else {
+                this.setAttribute("class", "unget");
+                this.textContent = "×";
+            }
+            turn++;
+        })
+    }
+
+
+
+    let turn = 0;
+    // number.map(function(n){clickButton(n)})
+    number.map((n)=>clickButton(n))
+    // clickButton("A");
+    // clickButton("B");
+    // clickButton("C");
+    // clickButton("D");
+    // clickButton("E");
+    // clickButton("F");
+    // clickButton("G");
+    // clickButton("H");
+    // clickButton("I");
+</script>
+
+</html>

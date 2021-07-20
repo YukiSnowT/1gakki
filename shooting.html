@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シューティングゲーム</title>
+</head>
+<style>
+    canvas{
+        cursor: none;
+    }
+    p{
+        margin: auto;
+        text-align: center;
+    }
+</style>
+<body>
+</body>
+<script>
+    //グローバル変数の定義
+    let canvasWidth = 400;
+    let canvasHeight = 600;
+    let gameover = true;
+    let clearPoint = 30;
+    let yourShotState = Array(10).fill(null); //弾発射用だったけどほぼ未使用
+    let enemyState = Array(5).fill(null); //敵着弾用
+    let hit = null; //自機着弾用
+    let round = -1; //爆発用
+    let round_x = 0; //爆発する位置
+    let round_y = 0; 
+    let counter = 0; //スコア
+    let bombcolor = "yellow" //爆発の色
+    let shotCool = true; //クールタイム用
+    let shotCoolSecond = 2; //クールタイムの秒数
+    let yourSize = 1; //自機の大きさ デフォルト1
+    let enemySize = 0.8; //敵の大きさ デフォルト0.8
+    let enemySpeedRndH = 0;
+    let enemySpeedRndT = 5;
+    let shotSpeed = 1; //弾の速さ デフォルト1（早すぎると当たらない）
+    let startGame = false; //ゲームスタート用
+    let modeSelect = [0,0,0,0]; //オプション用 順に色、弾速、難易度
+    const colorchange = [["#ddd","#bbb"],["#f22","#a00"],["#fcf","#dad"],["#f84","#d61"],["#ff8","#ff2"],["#ee4","#bb4"],["#8e8","#4a4"],["#3ef","#2af"],["#66f","#33d"],["#555","#000"],["#fff","#555"],["#ddd6","#bbb2"]]
+    const colorshot = ["orange","black","white"];
+
+    // const mashine = {
+    //     x: 0,
+    //     y: 0,
+    //     size: 1,
+    //     shot: false,
+    //     shotMax: 10,
+    //     mainColor: "#ddd",
+    //     wingColor: "#bbb",
+    //     shotColor: "orange"
+    // }
+
+    //mashineクラスの定義
+    const mashine = class {
+        constructor(x,y,size,speed,mainColor,wingColor,you,active,number){
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.speed = speed;
+            this.mainColor = mainColor;
+            this.wingColor = wingColor;
+            this.you = you;
+            this.active = active;
+            this.number = number;
+        }
+    }
+
+    //shotクラスの定義
+    const shot = class{
+        constructor(x,y,size,speed,color,you,active,number){
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.speed = speed;
+            this.color = color;
+            this.you = you;
+            this.active = active;
+            this.number = number;
+        }
+    }
+
+    const yourMashine = new mashine(-100,-100,yourSize,1,"#ddd","#bbb",true,true,0);
+    const yourShot1 = new shot(0,0,1,shotSpeed,"orange",true,false,1);
+    const enemyMashine1 = new mashine(50,-150,enemySize,5,"#aaf","#77f",false,false,1);
+    const enemyMashine2 = new mashine(350,-150,enemySize,5,"#aaf","#77f",false,false,2);
+    const enemyMashine3 = new mashine(125,-150,enemySize,5,"#aaf","#77f",false,false,3);
+    const enemyMashine4 = new mashine(275,-150,enemySize,5,"#aaf","#77f",false,false,4);
+    const enemyMashine5 = new mashine(200,-150,enemySize,5,"#aaf","#77f",false,false,5);
+
+
+    const canvas = document.createElement("canvas");
+    canvas.style.backgroundColor = "#dff"
+    canvas.style.display = "block";
+    canvas.style.margin = "auto";
+    canvas.setAttribute("id","canv");
+    canvas.setAttribute("width",canvasWidth)
+    canvas.setAttribute("height",canvasHeight)
+    document.querySelector("body").appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    const p = document.createElement("p");
+    p.textContent = "test";
+    document.querySelector("body").appendChild(p);
+
+
+
+    //マウスが動くたびに自機の位置を移動
+    const mouseMoving = () => {
+        document.getElementById("canv").addEventListener("mousemove",function(e){
+            yourMashine.x = e.offsetX;
+            yourMashine.y = e.offsetY;
+        })
+    }
+
+    //クリックした時の処理
+    const clickMashine = () =>{
+        document.getElementById("canv").addEventListener("click",function(){
+            if(!startGame){
+                startGame = true;
+                gameStart();
+            }else{
+                shoot();
+            }
+        } )
+    }
+
+    //弾の発射
+    const shoot = () =>{
+        if(!yourShot1.active&&gameover&&shotCool){
+            yourShot1.active = true;
+            yourShot1.x = yourMashine.x;
+            yourShot1.y = yourMashine.y;
+            yourShotState[0]=setInterval(function(){shootMove(0)},1000/60);
+            shotCool = false;
+            // yourMashine.mainColor = "#aaa";
+            setTimeout(function(){
+                shotCool = true;
+                // yourMashine.mainColor = "#ddd"
+            },shotCoolSecond*1000);
+        }
+    }
+
+    //弾を動かす
+    const shootMove = (i) =>{
+        if(yourShot1.active){
+            yourShot1.y = yourShot1.y-yourShot1.speed*20;
+            if(yourShot1.y<0-yourShot1.size*10){
+                yourShot1.active = false;
+            }
+        }else{
+                clearInterval(yourShotState[i]);
+                yourShotState[i]=null;
+                yourShot1.x = 999;
+                yourShot1.y = 999;
+        }
+    }
+
+    //敵のランダムポップ
+    const rndEnemy = (obj) =>{
+        const r = Math.floor(Math.random()*100);
+        if(r==0&&!obj.active){
+            obj.active = true;
+            obj.y = -50;
+            obj.speed = Math.floor(Math.random()*enemySpeedRndH)+enemySpeedRndT;
+            // console.log("test" + obj.number)
+            enemyState[obj.number-1] = setInterval(function(){enemyMove(obj,obj.x)},1000/60)
+        }
+    }
+
+    //敵の動き
+    const enemyMove = (obj,x) =>{
+        let speed = obj.speed+counter/5;
+        // if(obj === enemyMashine1){console.log("test")}
+        obj.y=obj.y+speed
+        if(obj.y>canvasHeight+20){
+            clearInterval(enemyState[obj.number-1]);
+            // enemyState[obj.number-1] = null;
+            obj.active = false;
+        }
+    }
+
+    //衝突ループ
+    const hitloop = (x,y) =>{
+        if(round === 0){
+            round = 1;
+            displayBomb(x,y,bombcolor)
+        }else if(round <30){
+            round = round+1;
+            displayBomb(x,y,bombcolor)
+        }else{
+            round = -1;
+        }
+        
+    }
+
+    //機体の描画の詳細
+    const displayPlane = (obj) =>{
+        let t = -1
+        if(obj.you){t = 1;}
+        //羽の輪郭
+        ctx.beginPath();
+        ctx.fillStyle = "#fff";
+        ctx.moveTo(obj.x,obj.y-20*obj.size*t);
+        ctx.lineTo(obj.x-40*obj.size,obj.y);
+        ctx.lineTo(obj.x+40*obj.size,obj.y);
+        ctx.closePath();
+        ctx.stroke();
+
+        //羽の色
+        ctx.beginPath();
+        ctx.fillStyle = obj.wingColor;
+        ctx.moveTo(obj.x,obj.y-20*obj.size*t);
+        ctx.lineTo(obj.x-40*obj.size,obj.y);
+        ctx.lineTo(obj.x+40*obj.size,obj.y);
+        ctx.fill();
+
+        //本体の色
+        ctx.beginPath();
+        ctx.fillStyle = obj.mainColor;
+        ctx.moveTo(obj.x,obj.y-50*obj.size*t);
+        ctx.lineTo(obj.x-10*obj.size,obj.y);
+        ctx.lineTo(obj.x,obj.y+5*obj.size*t);
+        ctx.lineTo(obj.x+10*obj.size,obj.y);
+        ctx.fill();
+
+        //本体の輪郭
+        ctx.beginPath();
+        ctx.moveTo(obj.x,obj.y-50*obj.size*t);
+        ctx.lineTo(obj.x-10*obj.size,obj.y);
+        ctx.lineTo(obj.x,obj.y+5*obj.size*t);
+        ctx.lineTo(obj.x+10*obj.size,obj.y);
+        ctx.closePath();
+        ctx.lineTo(obj.x,obj.y+5*obj.size*t);
+        ctx.stroke();
+    }
+
+    //弾描画の詳細
+    const displayShoot = (obj) =>{
+        //弾の色
+        ctx.beginPath();
+        ctx.fillStyle = obj.color;
+        ctx.arc(obj.x,obj.y,obj.size*5,0,(Math.PI/180)*360);
+        ctx.fill();
+        
+        //弾の輪郭
+        ctx.beginPath();
+        ctx.fillStyle = "#fff";
+        ctx.arc(obj.x,obj.y,obj.size*5,0,(Math.PI/180)*360);
+        ctx.stroke();
+        
+    }
+
+    //着弾の描画
+    const displayBomb = (x,y,color) =>{
+        // console.log(round)
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(x,y,round,0,(Math.PI/180)*360);
+        ctx.fill();
+    }
+
+    //自機着弾判定
+    const checkHitBreak = (meobj,enemyobj) =>{
+        const mexl = meobj.x - meobj.size*10
+        const mexr = meobj.x + meobj.size*10
+        const meyt = meobj.y - meobj.size*35
+        const meyb = meobj.y
+
+        const enemyxl = enemyobj.x - enemyobj.size*40
+        const enemyxr = enemyobj.x + enemyobj.size*40
+        const enemyyt = enemyobj.y - enemyobj.size*10
+        const enemyyb = enemyobj.y + enemyobj.size*50
+        
+        if(mexl<enemyxr&&mexr>enemyxl&&meyt<enemyyb&&meyb>enemyyt){
+            //着弾処理
+            console.log("hit")
+            meobj.active = false;
+            enemyobj.active = false;
+            clearInterval(enemyState[enemyobj.number-1]);
+            gameover = false;
+            round = 0;
+            round_x = (meobj.x + enemyobj.x)/2;
+            round_y = (meobj.y + enemyobj.y)/2;
+            bombcolor = "orange"
+        }
+    }
+
+    //敵着弾判定
+    const checkHitShoot = (shotobj,enemyobj) =>{
+        if(shotobj.x<enemyobj.x + enemyobj.size*40&&shotobj.x > enemyobj.x - enemyobj.size*40&&shotobj.y>enemyobj.y - enemyobj.size*10&&shotobj.y<enemyobj.y + enemyobj.size*50){
+            //着弾処理
+            enemyobj.active = false;
+            enemyobj.y = -500
+            counter++;
+            round = 0;
+            round_x = shotobj.x;
+            round_y = shotobj.y;
+            clearInterval(enemyState[enemyobj.number-1]);
+            shotobj.x = 999;
+            shotobj.y = 999;
+            shotobj.active=false;
+            clearInterval(yourShotState[shotobj.number-1]);
+        }
+    }
+
+    //スコア描画
+    const score = () =>{
+        ctx.fillStyle = "black";
+        ctx.font = "15px center";
+        ctx.fillText("SCORE:" + counter,10,20);
+    }
+
+    //リロード描画
+    const reload = () =>{
+        ctx.fillStyle = "red";
+        ctx.font = "15px center";
+        ctx.fillText("RELOAD",100,20);
+    }
+
+    //画面の描画総まとめ
+    const displayAll = () =>{
+        if(counter<clearPoint){
+            ctx.clearRect(0,0,canvasWidth,canvasHeight);
+            if(yourShot1.active){displayShoot(yourShot1);}
+            if(yourMashine.active){displayPlane(yourMashine);}
+            rndEnemy(enemyMashine1);
+            rndEnemy(enemyMashine2);
+            rndEnemy(enemyMashine3);
+            rndEnemy(enemyMashine4);
+            rndEnemy(enemyMashine5);
+            if(enemyMashine1.active){displayPlane(enemyMashine1);}
+            if(enemyMashine2.active){displayPlane(enemyMashine2);}
+            if(enemyMashine3.active){displayPlane(enemyMashine3);}
+            if(enemyMashine4.active){displayPlane(enemyMashine4);}
+            if(enemyMashine5.active){displayPlane(enemyMashine5);}
+            checkHitShoot(yourShot1,enemyMashine1);
+            checkHitShoot(yourShot1,enemyMashine2);
+            checkHitShoot(yourShot1,enemyMashine3);
+            checkHitShoot(yourShot1,enemyMashine4);
+            checkHitShoot(yourShot1,enemyMashine5);
+            score();
+            if(!shotCool){reload();}
+            if(gameover){checkHitBreak(yourMashine,enemyMashine1)}
+            if(gameover){checkHitBreak(yourMashine,enemyMashine2)}
+            if(gameover){checkHitBreak(yourMashine,enemyMashine3)}
+            if(gameover){checkHitBreak(yourMashine,enemyMashine4)}
+            if(gameover){checkHitBreak(yourMashine,enemyMashine5)}
+            if(round > -1){hitloop(round_x,round_y)};
+            if(!gameover){
+                ctx.fillStyle = "red";
+                ctx.font = "50px center";
+                ctx.fillText("Game Over",60,200);
+            }
+        }else{
+            ctx.clearRect(0,0,canvasWidth,canvasHeight);
+            ctx.fillStyle = "red";
+            ctx.font = "50px center";
+            ctx.fillText("CLEAR!",120,200);
+            yourMashine.x = 200;
+            yourMashine.y = 450;
+            displayPlane(yourMashine);
+        }
+    }
+ 
+    //タイトルの描画
+    const titleMenu = () =>{
+        ctx.clearRect(0,0,canvasWidth,canvasHeight)
+        ctx.fillStyle = "black";
+        ctx.font = "30px center";
+        ctx.fillText("シューティングゲーム",50,100);
+        ctx.font = "15px center";
+        ctx.fillText("マウス操作で移動　クリックで弾を発射",60,150);
+        ctx.fillText("弾を撃つとリロードのクールタイムが発生",55,170);
+        ctx.fillText("敵を一定数倒すとゲームクリア",90,190);
+
+        ctx.font = "bold 20px center";
+        ctx.fillText("クリックで開始",130,580);
+        ctx.fillStyle = "purple";
+        ctx.fillText("オプションメニュー",110,250);
+        
+        ctx.fillStyle = "black";
+        ctx.font = "15px center";
+        ctx.fillText("C　自機のカラー変更：",50,300);
+        ctx.fillText("S　弾のカラー変更　：",50,330);
+        ctx.fillText("M　難易度変更：",50,360);
+        ctx.fillText("G　目標スコア：",50,450);
+        ctx.font = "13px center";
+        ctx.fillText("敵のスピード：",60,390);
+        ctx.fillText("敵の大きさ　：",60,410);
+        ctx.fillText("自機の大きさ：",200,390);
+        ctx.fillText("リロード速度：",200,410);
+        
+        ctx.strokeStyle = "black"
+        ctx.strokeRect(46,285,20,20);
+        ctx.strokeRect(46,315,20,20);
+        ctx.strokeRect(46,345,20,20);
+        ctx.strokeRect(46,435,20,20);
+        ctx.strokeRect(30,225,330,250);
+        ctx.strokeRect(30,225,330,38);
+        ctx.strokeRect(30,225,330,250);
+
+        yourMashine.x = 200;
+        yourMashine.y = 550;
+        displayPlane(yourMashine);
+
+    }
+
+    document.addEventListener("keydown",function(e){
+        if(!startGame){
+            if(e.key==="c"){
+                modeSelect[0]++;
+                if(modeSelect[0]===12){modeSelect[0]=0;}
+                yourMashine.mainColor = colorchange[modeSelect[0]][0];
+                yourMashine.wingColor = colorchange[modeSelect[0]][1];
+                titleMenu();
+                modechange1();
+                modechange2();
+                modechange3();
+                modechange4();
+            }else if(e.key==="s"){
+                modeSelect[1]++;
+                if(modeSelect[1]===3){modeSelect[1]=0;}
+                yourShot1.color = colorshot[modeSelect[1]];
+                modechange2();
+            }else if(e.key==="m"){
+                modeSelect[2]++;
+                if(modeSelect[2]===4){modeSelect[2]=0;}
+                modechange3();
+            }else if(e.key==="g"){
+                modeSelect[3]++;
+                if(modeSelect[3]===6){modeSelect[3]=0;}
+                modechange4();
+            }
+        }
+    })
+
+    //自機色変更
+    const modechange1 = () =>{
+        ctx.clearRect(210,285,115,20)
+        if(modeSelect[0] ===0){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,285,70,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("シルバー",215,300); //ddd,bbb
+        }else if(modeSelect[0] === 1){
+            ctx.fillStyle = "white";
+            ctx.fillRect(210,285,85,20)
+            ctx.strokeStyle = "black"
+            ctx.strokeRect(210,285,85,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("カーマイン",215,300); //f22,a00
+        }else if(modeSelect[0] === 2){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,285,100,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("ローズピンク",215,300); //fcf,dad
+        }else if(modeSelect[0] === 3){
+            ctx.fillStyle = "white";
+            ctx.fillRect(210,285,70,20)
+            ctx.strokeStyle = "black"
+            ctx.strokeRect(210,285,70,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("オレンジ",215,300); //f84,d61
+        }else if(modeSelect[0] === 4){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,285,55,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("レモン",215,300); //ff8,ff2
+        }else if(modeSelect[0] === 5){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,285,70,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("ゴールド",215,300); //ee4,bb5
+        }else if(modeSelect[0] === 6){
+            ctx.fillStyle = "white";
+            ctx.fillRect(210,285,115,20)
+            ctx.strokeStyle = "black"
+            ctx.strokeRect(210,285,115,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("ライムグリーン",215,300); //8e8,4a4
+        }else if(modeSelect[0] === 7){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,285,100,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("スカイブルー",215,300); //3ef,2af 
+        }else if(modeSelect[0] === 8){
+            ctx.fillStyle = "white";
+            ctx.fillRect(210,285,115,20)
+            ctx.strokeStyle = "black"
+            ctx.strokeRect(210,285,115,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("コバルトブルー",215,300); //66f,33d
+        }else if(modeSelect[0] === 9){
+            ctx.fillStyle = "white";
+            ctx.fillRect(210,285,70,20)
+            ctx.strokeStyle = "black"
+            ctx.strokeRect(210,285,70,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("ブラック",215,300); //555,000
+        }else if(modeSelect[0] === 10){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,285,115,20)
+            ctx.fillStyle = yourMashine.mainColor;
+            ctx.font = "bold 15px center";
+            ctx.fillText("ツートンカラー",215,300); //fff,555
+        }else if(modeSelect[0] === 11){
+            // ctx.fillStyle = "white";
+            // ctx.fillRect(210,285,115,20)
+            ctx.strokeStyle = "black"
+            ctx.strokeRect(210,285,115,20)
+            ctx.fillStyle = "black";
+            ctx.font = "bold 15px center";
+            ctx.fillText("クリアフレーム",215,300); //ddd6,bbb2
+        }
+    }
+
+    //弾色変更
+    const modechange2 = () =>{
+        ctx.clearRect(210,315,70,20)
+        if(modeSelect[1]===0){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,315,70,20)
+            ctx.fillStyle = yourShot1.color;
+            ctx.font = "bold 15px center";
+            ctx.fillText("オレンジ",215,330);
+        }else if(modeSelect[1]===1){
+            ctx.fillStyle = "black";
+            ctx.fillRect(210,315,70,20)
+            ctx.fillStyle = "white";
+            ctx.font = "bold 15px center";
+            ctx.fillText("ブラック",215,330);
+        }else if(modeSelect[1]===2){
+            ctx.fillStyle = "white";
+            ctx.fillRect(210,315,70,20)
+            ctx.strokeStyle = "black";
+            ctx.strokeRect(210,315,70,20)
+            ctx.fillStyle = "black";
+            ctx.font = "bold 15px center";
+            ctx.fillText("ホワイト",215,330);
+        }
+    }
+
+    const modechange3 = () =>{
+        if(modeSelect[2]===0){
+            ctx.clearRect(150,370,50,70);
+            ctx.clearRect(290,370,50,70);
+            ctx.clearRect(165,340,70,25);
+            ctx.fillStyle = "black";
+            ctx.font = "bold 14px center";
+            ctx.fillText("Normal",165,359);
+            ctx.fillText("普通",150,390);
+            enemySpeedRndH = 5;
+            enemySpeedRndT = 3;
+            ctx.fillText("普通",150,410);
+            ctx.fillText("普通",290,390);
+            yourMashine.size = 1;
+            enemyMashine1.size = 0.8;
+            enemyMashine2.size = 0.8;
+            enemyMashine3.size = 0.8;
+            enemyMashine4.size = 0.8;
+            enemyMashine5.size = 0.8;
+            ctx.fillText("2秒",290,410);
+            shotCoolSecond = 2;
+            
+        }else if(modeSelect[2]===1){
+            ctx.clearRect(150,370,50,70);
+            ctx.clearRect(290,370,50,70);
+            ctx.clearRect(165,340,70,25);
+            ctx.fillStyle = "black";
+            ctx.font = "bold 14px center";
+            ctx.fillText("普通",150,410);
+            ctx.fillText("2秒",290,410);
+            shotCoolSecond = 2;
+            ctx.fillStyle = "red";
+            ctx.fillText("Hard",165,359);
+            ctx.fillText("速い",150,390);
+            enemySpeedRndH = 7;
+            enemySpeedRndT = 5;
+            ctx.fillText("大きい",290,390);
+            enemyMashine1.size = 0.8;
+            enemyMashine2.size = 0.8;
+            enemyMashine3.size = 0.8;
+            enemyMashine4.size = 0.8;
+            enemyMashine5.size = 0.8;
+            yourMashine.size = 1.2;
+
+        }else if(modeSelect[2]===2){
+            ctx.clearRect(150,370,50,70);
+            ctx.clearRect(290,370,50,70);
+            ctx.clearRect(165,340,70,25);
+            ctx.font = "bold 14px center";
+            ctx.fillStyle = "purple";
+            ctx.fillText("Lunatic",165,359);
+            ctx.fillText("超速い",150,390);
+            ctx.fillStyle = "red";
+            enemySpeedRndH = 13;
+            enemySpeedRndT = 7;
+            ctx.fillText("大きい",150,410);
+            ctx.fillText("大きい",290,390);
+            enemyMashine1.size = 1;
+            enemyMashine2.size = 1;
+            enemyMashine3.size = 1;
+            enemyMashine4.size = 1;
+            enemyMashine5.size = 1;
+            yourMashine.size = 1.2;
+            ctx.fillText("3秒",290,410);
+            shotCoolSecond = 3;
+        }else if(modeSelect[2]===3){
+            ctx.clearRect(150,370,50,70);
+            ctx.clearRect(290,370,50,70);
+            ctx.clearRect(165,340,70,25);
+            ctx.fillStyle = "black";
+            ctx.fillText("普通",290,390);
+            ctx.fillText("普通",150,410);
+            ctx.font = "bold 14px center";
+            ctx.fillStyle = "blue";
+            ctx.fillText("Easy",165,359);
+            ctx.fillText("遅い",150,390);
+            enemySpeedRndH = 2;
+            enemySpeedRndT = 3;
+            ctx.fillText("1秒",290,410);
+            shotCoolSecond = 1;
+            yourMashine.size = 1;
+            enemyMashine1.size = 0.8;
+            enemyMashine2.size = 0.8;
+            enemyMashine3.size = 0.8;
+            enemyMashine4.size = 0.8;
+            enemyMashine5.size = 0.8;
+        }
+    }
+
+    const modechange4 = () =>{
+        if(modeSelect[3]===0){
+            clearPoint = 30;
+        }else if(modeSelect[3]===1){
+            clearPoint = 40;
+        }else if(modeSelect[3]===2){
+            clearPoint = 50;
+        }else if(modeSelect[3]===3){
+            clearPoint = 999999;
+        }else if(modeSelect[3]===4){
+            clearPoint = 10;
+        }else if(modeSelect[3]===5){
+            clearPoint = 20;
+        }
+        ctx.clearRect(170,430,70,25);
+        ctx.fillStyle = "black";
+        ctx.font = "bold 14px center";
+        if(modeSelect[3]===3){ctx.fillText("エンドレス",170,450);}
+        else{ctx.fillText(clearPoint + "機",170,450);}
+    }
+
+
+    //f22,a00 カーマイン
+    ///fcf,dad ローズピンク
+    ///f84,d61 オレンジ
+    //ff8,ff2 レモン
+    //ee4,bb4 ゴールド
+    ///8e8,4a4 ライムグリーン
+    ///3ef,2af スカイブルー
+    ///66f,33d コバルトブルー
+    //555,000 ブラック
+    ///fff,555 ツートン
+    //ddd6,bbb2 クリアフレーム
+
+
+
+    //ゲームスタート
+    const gameStart = () =>{
+        mouseMoving();
+        clickMashine();
+        setInterval(displayAll,1000/60);
+            enemyMashine1.speed = Math.floor(Math.random()*enemySpeedRndH)+enemySpeedRndT;
+            enemyMashine2.speed = Math.floor(Math.random()*enemySpeedRndH)+enemySpeedRndT;
+            enemyMashine3.speed = Math.floor(Math.random()*enemySpeedRndH)+enemySpeedRndT;
+            enemyMashine4.speed = Math.floor(Math.random()*enemySpeedRndH)+enemySpeedRndT;
+            enemyMashine5.speed = Math.floor(Math.random()*enemySpeedRndH)+enemySpeedRndT;
+    }
+
+    titleMenu();
+    clickMashine();
+    modechange1();
+    modechange2();
+    modechange3();
+    modechange4();
+
+</script>
+</html>

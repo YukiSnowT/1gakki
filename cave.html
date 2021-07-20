@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ハエが洞窟を進むゲーム ～ Go to Cave</title>
+</head>
+<style>
+    #cave{
+        display: block;
+        background-color: #eee;
+        margin: 0 auto;
+    }
+    p{
+        text-align: center;
+        font-size: 1.4em;
+        margin: 20px auto 0 auto;
+    }
+    #retry{
+        font-size: 1.1em;
+        margin: 10px auto;
+    }
+</style>
+<body>
+    <canvas id="cave" width="800" height="600"></canvas>
+    <p id="score"></p>
+    <p id="retry"></p>
+</body>
+<script>
+    //グローバル変数の定義
+    let cave_top = [];
+    let cave_height = [];
+    const cave_start = 200;
+    const height_start = 200;
+    let level = 1;
+    let count = 0;
+    let player = [];
+    let player_speed = 0.1;
+    const player_start = 300;
+    let player_state = true;
+    let loopPlayer = null;
+    let gameover = true;
+    let loopGame = null;
+    let gamestart = true;
+    let ctx_cave = document.getElementById("cave").getContext('2d');
+
+    //次回の壁の増減
+    const caveTopRnd = () =>{
+        let n = (Math.floor(Math.random()*(2*level+1)))-level
+        return n;
+    }
+
+    //次回の幅の増減
+    const caveHeightRnd = () =>{
+        let n = (Math.floor(Math.random()*(level*2+1)))-level;
+        cave_height.push(cave_height[cave_height.length-1] + n);
+        if(cave_height[cave_height.length-1]<160-level){
+            cave_height[cave_height.length-1] = 160-level;
+        }
+        if(cave_height[cave_height.length-1]>200+level){
+            cave_height[cave_height.length-1] = 200+level;
+        }
+    }
+
+
+    //壁の追加
+    const caveIncrease = () =>{
+        if(cave_top.length===800){
+            cave_top.shift();
+            cave_height.shift();
+        }
+        const x = cave_top[cave_top.length-1];
+        cave_top.push(x+caveTopRnd());
+        if(cave_top[cave_top.length-1]<100){cave_top[cave_top.length-1]=100;}
+        if(cave_top[cave_top.length-1]>400){cave_top[cave_top.length-1]=400;}
+        caveHeightRnd();
+    }
+
+    //プレイヤーの追加
+    const playerIncrease1 = () =>{
+        document.addEventListener("keydown",keyDown)
+    }
+    const playerIncrease2 = () =>{
+        document.addEventListener("keyup",keyUp)
+    }
+
+    const keyDown = (e) =>{
+            if(e.keyCode === 32&&player_state){
+                clearInterval(loopPlayer);
+                loopPlayer=setInterval("loopSpeed(true)",1000/30)
+            }
+    }
+    const keyUp = (e) =>{
+        const x =player[player.length-1];
+            if(e.keyCode === 32&&player_state===false){
+                clearInterval(loopPlayer);
+                loopPlayer = setInterval("loopSpeed(false)",1000/30)
+            }
+    }
+    const loopSpeed = (t) =>{
+        if(t){
+            player_speed=player_speed+0.4;
+            player_state = false;
+        }else{
+            player_speed=player_speed-0.4;
+            player_state = true;
+        }
+    }
+
+    
+
+    
+    //壁・プレイヤーの描画
+    const displayCave = (ctx) =>{
+        ctx.clearRect(0,0,800,600);
+        const x = cave_top.length
+        for(i=0;i<x;i++){
+            ctx.lineCap = "round"
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(i+800-x,0);
+            ctx.lineTo(i+800-x,cave_top[i]);
+            ctx.moveTo(i+800-x,cave_top[i]+cave_height[i]);
+            ctx.lineTo(i+800-x,599);
+            ctx.stroke();
+        }
+        const y = player.length;
+        ctx.strokeStyle = "red";
+        for(i=0;i<y-1;i++){
+            ctx.moveTo(i+400-y,600-player[i]);
+            ctx.lineTo(i+400-y,601-player[i]);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = "#888";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(399,600-player[y-1]);
+        ctx.lineTo(399,601-player[y-1]);
+        ctx.stroke();
+        ctx.strokeStyle = "black";
+    }
+
+
+    //永続描画
+    const displayCaveAll = () =>{
+        loopGame = setInterval(function(){
+            if(gameover){
+                displayCave(ctx_cave);
+                caveIncrease();
+                count++;
+                if(player_speed>5){player_speed=5;}
+                if(player_speed<-5){player_speed=-5;}
+                if(player.length===400){player.shift();}
+                player.push(player[player.length-1]+Math.round(player_speed));
+                if(count%300===299){
+                    level++;
+                }
+                // if(level===5){
+                //     document.getElementById("cave").style.backgroundColor = "#ddd";
+                // }else if(level===10){
+                //     document.getElementById("cave").style.backgroundColor = "#ccc";
+                // }else if(level===15){
+                //     document.getElementById("cave").style.backgroundColor = "#bbb";
+                // }else if(level===20){
+                //     document.getElementById("cave").style.backgroundColor = "#aaa";
+                // }
+                if(count<400){
+                    document.getElementById("score").textContent="入口までの距離：" + Math.round((400-count)*0.1) + "m";
+                }else{
+                    document.getElementById("score").textContent="入口からの距離：" + Math.round((count-400)*0.1) + "m";
+                }
+                gameover = checkGame();
+            }else{
+                allStop(ctx_cave);
+            }
+        },1000/30);
+    }
+
+    //ゲーム続行の可否
+    const checkGame = () =>{
+        let n = true;
+        if(player[player.length-1]<0){
+            n = false;
+        }
+        if(player[player.length-1]>600){
+            n = false;
+        }
+        if(600-player[player.length-1]<cave_top[cave_top.length - 400]) {
+            n=false;
+        }
+        if(600-player[player.length-1]>cave_top[cave_top.length - 400]+cave_height[cave_top.length - 400]) {
+            n=false;
+        }
+        return n;
+    }
+
+    //リトライ
+    const retry = () =>{
+        document.addEventListener("keydown",keyDownEnd)
+    }
+    const keyDownEnd = (e) =>{
+            if(e.keyCode === 82){
+                location.reload();
+            }
+    }
+
+    //全停止
+    const allStop = (ctx) =>{
+        clearInterval(loopGame);
+        const n = player[player.length-1];
+        ctx.strokeStyle = "red";
+        ctx.lineCap = "round"
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(390,590-n);
+        ctx.lineTo(410,610-n);
+        ctx.moveTo(390,610-n);
+        ctx.lineTo(410,590-n);
+        ctx.stroke();
+        const x = document.getElementById("score");
+        x.style.color = "red"
+        x.style.fontWeight = "bold"
+        if(count<400){
+            x.textContent="洞窟までたどり着けなかった！　Game Over";
+        }else{
+            x.textContent="記録：" + Math.round((count-400)*0.1) + "m　Game Over";
+        }
+        if(level>19){
+            document.getElementById("retry").innerText = "隠しコマンド：スタート画面で「＠」キーを押すと最初から難しい洞窟で開始\n「R」キーでリトライ"
+        }else if(level>9){
+            document.getElementById("retry").innerText = "隠しコマンド：スタート画面で「F」キーを押すと最初から少し難しい洞窟で開始\n「R」キーでリトライ"
+        }else{
+            document.getElementById("retry").innerText = "「R」キーでリトライ"
+        }
+        retry();
+    }
+
+    //スタート画面の描画
+    const opening = (ctx) =>{
+        ctx.font = "48px center";
+        ctx.fillText("ハエが洞窟を進むゲーム", 130, 200);
+        ctx.font = "20px center";
+        ctx.fillText("Spaceキーを押すと上昇　Spaceキーを離すと下降", 140, 300);
+        ctx.fillText("洞窟は進めば進むほど、高低差が激しく難しくなる", 140, 330);
+        ctx.fillText("洞窟の壁にぶつかるとゲームオーバー", 140, 360);
+        ctx.font = "30px center";
+        ctx.fillText("Spaceキーを押して開始", 200, 450);
+    }
+
+    const openGame1 = () =>{
+        document.addEventListener("keydown",openGame2)
+    }
+
+    const openGame2 = (e) =>{
+        if(e.keyCode === 32&&gamestart){
+            gamestart = false;
+            ctx_cave.clearRect(0,0,800,600);
+            gameStart();
+        }else if(e.keyCode === 70&&gamestart){
+            gamestart = false;
+            level = 10;
+            ctx_cave.clearRect(0,0,800,600);
+            gameStart();
+        }else if(e.keyCode === 192&&gamestart){
+            level = 20;
+            gamestart = false;
+            ctx_cave.clearRect(0,0,800,600);
+            gameStart();
+        }
+    }
+
+    //ゲーム開始
+    const gameStart = () =>{
+    cave_top.push(cave_start);
+    cave_height.push(height_start);
+    player.push(player_start);
+
+    playerIncrease1();
+    playerIncrease2();
+    loopPlayer = setInterval("loopSpeed(false)",1000/30)
+    displayCaveAll();
+    }
+    
+    opening(ctx_cave);
+    openGame1();
+
+</script>
+</html>

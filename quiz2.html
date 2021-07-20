@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+​
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        ul {
+            list-style: none;
+            margin-left: -20px;
+        }
+
+        li {
+            width: 800px;
+            height: 75px;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 24px;
+            border: 1px black solid;
+            background-color: yellowgreen
+        }
+
+        .mondai {
+            width: 800px;
+            height: 200px;
+            margin-left: 20px;
+            padding: 10px;
+
+            font-size: 24px;
+            border: 1px black solid;
+            background-color: orange;
+        }
+
+        .true {
+            background-color: blue;
+            color: white;
+        }
+
+        .false {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+​
+
+<body>
+    <div class="mondai">
+        <p>問題文</p>
+    </div>
+    <ul>
+        <li id="A">A</li>
+        <li id="B">B</li>
+        <li id="C">C</li>
+        <li id="D">D</li>
+    </ul>
+</body>
+<script>
+    const answer_A = document.getElementById("A");
+    const answer_B = document.getElementById("B");
+    const answer_C = document.getElementById("C");
+    const answer_D = document.getElementById("D");
+
+    function removeClass (answerId){
+        const answer_ID = document.getElementById(answerId)
+        answer_ID.removeAttribute("class");
+        answer_ID.textContent = answerId;
+    }
+
+    document.getElementById("A").addEventListener("click", function () {
+        this.setAttribute("class", "true")
+        this.textContent = "正解";
+        removeClass("B");
+        removeClass("C");
+        removeClass("D");
+
+    })
+    document.getElementById("B").addEventListener("click", function () {
+        this.setAttribute("class", "false");
+        document.getElementById("A").removeAttribute("class");
+        document.getElementById("A").textContent = "A";
+        document.getElementById("C").removeAttribute("class");
+        document.getElementById("C").textContent = "C";
+        document.getElementById("D").removeAttribute("class");
+        document.getElementById("D").textContent = "D";
+        this.textContent = "不正解";
+    })
+    document.getElementById("C").addEventListener("click", function () {
+        this.setAttribute("class", "false");
+        document.getElementById("A").removeAttribute("class");
+        document.getElementById("A").textContent = "A";
+        document.getElementById("B").removeAttribute("class");
+        document.getElementById("B").textContent = "B";
+        document.getElementById("D").removeAttribute("class");
+        document.getElementById("D").textContent = "D";
+        this.textContent = "不正解";
+    })
+    document.getElementById("D").addEventListener("click", function () {
+        this.setAttribute("class", "false");
+        document.getElementById("A").removeAttribute("class");
+        document.getElementById("A").textContent = "A";
+        document.getElementById("B").removeAttribute("class");
+        document.getElementById("B").textContent = "B";
+        document.getElementById("C").removeAttribute("class");
+        document.getElementById("C").textContent = "C";
+        this.textContent = "不正解";
+    })
+</script>
+​
+
+</html>

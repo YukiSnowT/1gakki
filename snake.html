@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スネークゲーム ～ Snake Game</title>
+</head>
+<body>
+    
+</body>
+<script>
+    //ローカル変数の定義
+    const grid = 20; //マス目のサイズ
+    const canvasWidth = 400; //canvasの横幅
+    const canvasHeight = 400; //canvasの縦幅
+    let speed = 15; //描画（蛇）の速さ
+    const result = true; //ゲーム続行中か
+    let starter = true; //スタート処理用
+    let looper = null; //ループ処理用
+    let mode = 1; //0でEasy、1でNormal、2でHard
+    let item = {
+        x: 0,
+        y: 0,
+        edge: 0,
+        rnd: function(){ //ランダムな位置に移動
+            this.x = Math.floor(Math.random()*(canvasWidth/grid-this.edge*2))+this.edge;
+            this.y = Math.floor(Math.random()*(canvasHeight/grid-this.edge*2))+this.edge;
+        }
+    }
+
+    const snake = {
+        x: 0, //頭の現在地xマス目
+        y: 0, //頭の現在地yマス目
+        dx: 1, //右方向への速度
+        dy: 0, //下方向への速度
+        len: 4, //長さ
+        nowBody: [], //体の現在地
+        display: function(){ //描画して次に進む
+            ctx.clearRect(0,0,canvasHeight,canvasWidth);
+            ctx.fillStyle = "green";
+            this.nowBody.push([this.x,this.y]);
+            if(this.nowBody.length > this.len){this.nowBody.shift()}
+            this.nowBody.map(([xx,yy]) => ctx.fillRect(xx*grid,yy*grid,grid-1,grid-1));
+            ctx.fillStyle = "darkgreen";
+            ctx.fillRect(this.x*grid,this.y*grid,grid-1,grid-1);
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(item.x*grid+grid/2,item.y*grid+grid/2,grid/2,0,(Math.PI/180)*360);
+            ctx.fill();
+            ctx.closePath();
+            ctx.fillStyle = "black";
+            ctx.fillRect(item.x*grid+grid/2-1,item.y*grid-grid/8+1,1,grid/4);
+            this.x = this.x + this.dx;
+            this.y = this.y + this.dy;
+        } 
+    };
+
+
+    //canvasのセット
+    let canvas = document.createElement("canvas")
+    canvas.style.backgroundColor = "#ddd"
+    canvas.style.display = "block";
+    canvas.style.margin = "auto";
+    canvas.setAttribute("id","canv");
+    canvas.setAttribute("width",canvasWidth)
+    canvas.setAttribute("height",canvasHeight)
+    document.querySelector("body").appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+
+
+    //ボタンを押した処理
+    const clickKey = () =>{
+        document.addEventListener("keydown",function(e){
+            if(e.key === "ArrowUp"&&snake.dy === 0){
+                snake.dx = 0;
+                snake.dy = -1;
+            }else if(e.key === "ArrowDown"&&snake.dy === 0){
+                snake.dx = 0;
+                snake.dy = 1;
+            }else if(e.key === "ArrowLeft"&&snake.dx === 0){
+                snake.dx = -1;
+                snake.dy = 0;
+            }else if(e.key === "ArrowRight"&&snake.dx === 0){
+                snake.dx = 1;
+                snake.dy = 0;
+            }
+        })
+    }
+
+
+    //loop処理
+    const loop = () =>{
+        snake.display();
+        if(snake.x===item.x&&snake.y===item.y){
+            snake.len++;
+            item.rnd();
+        }
+        let f = false;
+        for(i=0;i<snake.nowBody.length;i++){
+            if(snake.nowBody[i][0]===snake.x&&snake.nowBody[i][1]===snake.y){
+                f = true;
+                break;
+            }
+        }
+        if(f){
+            gameEnd();
+        }
+        if(snake.x<0||snake.x>canvasWidth/grid-1||snake.y<0||snake.y>canvasHeight/grid-1){
+            gameEnd();
+        }
+    }
+
+    //ゲーム終了
+    const gameEnd = () =>{
+        clearInterval(looper);
+        ctx.fillStyle = "red";
+        ctx.font = "50px center";
+        ctx.fillText("Game Over",60,100);
+        ctx.font = "30px center";
+        ctx.fillStyle = "black";
+        ctx.fillText("記録：" + (snake.len-4) + "回",50,canvasHeight-100);
+        ctx.fillText("Spaceキーでリトライ",50,canvasHeight-50);
+        starter = true;
+    }
+
+    //スタート処理
+    const startMenu = () =>{
+        document.addEventListener("keydown",function(e){
+            if(e.keyCode===32&&starter){
+                starter = false;
+                ctx.clearRect(0,0,canvasWidth,canvasHeight);
+                gameStart();
+            }else if(e.key === "m"&&starter){
+                ctx.clearRect(11,11,98,28);
+                ctx.clearRect(10, canvasHeight/4*3+22,canvasWidth,25);
+                if(mode === 1){
+                    ctx.font = "24px center";
+                    ctx.fillText("Easy",32,34);
+                    ctx.font = "18px center";
+                    ctx.fillText("Easy：速度低下・果実が画面端に出現しない", 10, canvasHeight/4*3+40);
+                    speed = 13;
+                    item.edge = 1;
+                    mode = 0;
+                }else if(mode === 0){
+                    ctx.font = "24px center";
+                    ctx.fillText("Hard",32,34);
+                    ctx.font = "18px center";
+                    ctx.fillText("Hard：速度上昇", 10, canvasHeight/4*3+40);
+                    speed = 20;
+                    item.edge = 0;
+                    mode = 2;
+                }else if(mode === 2){
+                    ctx.font = "24px center";
+                    ctx.fillStyle = "red"
+                    ctx.fillText("Lunatic",17,34);
+                    ctx.font = "18px center";
+                    ctx.fillText("Lunatic：速度超上昇", 10, canvasHeight/4*3+40);
+                    speed = 35;
+                    item.edge = 0;
+                    mode = 3;
+                }else if(mode === 3){
+                    ctx.font = "24px center";
+                    ctx.fillStyle = "black"
+                    ctx.fillText("Normal",17,35);
+                    ctx.font = "18px center";
+                    ctx.fillText("「m」キーで難易度変更", 10, canvasHeight/4*3+40);
+                    speed = 15;
+                    item.edge = 0;
+                    mode = 1;
+                }
+
+            }
+        })
+    }
+
+    //初期設定
+    const displayStart = () =>{
+        ctx.font = "32px center";
+        ctx.fillText("スネークゲーム", canvasWidth/5, canvasHeight/4);
+        ctx.font = "18px center";
+        ctx.fillText("上下左右キーでヘビを操作", 10, canvasHeight/4*3-20);
+        ctx.fillText("果実を獲得してヘビを成長させていく", 10, canvasHeight/4*3);
+        ctx.fillText("画面端や自分の体にぶつかるとゲームオーバー", 10, canvasHeight/4*3+20);
+        ctx.fillText("「m」キーで難易度変更", 10, canvasHeight/4*3+40);
+        ctx.font = "24px center";
+        ctx.fillText("Spaceキーを押して開始", canvasWidth/6, canvasHeight-20);
+        ctx.strokeRect(10,10,100,30);
+        ctx.fillText("Normal",17,35);
+        ctx.fillText("ヘビ", canvasWidth/10+17,canvasHeight/2-30);
+        ctx.fillText("↓", canvasWidth/10+27,canvasHeight/2);
+        ctx.fillText("果実", canvasWidth/10*8-22,canvasHeight/2-30);
+        ctx.fillText("↓", canvasWidth/10*8-12,canvasHeight/2);
+        ctx.fillStyle = "green"
+        ctx.fillRect(canvasWidth/10,canvasHeight/2+20,59,19);
+        ctx.clearRect(canvasWidth/10+19,canvasHeight/2+20,1,20);
+        ctx.clearRect(canvasWidth/10+39,canvasHeight/2+20,1,20);
+        ctx.fillStyle = "darkgreen"
+        ctx.fillRect(canvasWidth/10+60,canvasHeight/2+20,19,19);
+        ctx.fillStyle = "red"
+        ctx.beginPath();
+        ctx.arc(canvasWidth/10*8,canvasHeight/2+20+grid/2,grid/2,0,(Math.PI/180)*360);
+        ctx.fill();
+        ctx.closePath();
+        ctx.fillStyle = "black"
+        ctx.fillRect(canvasWidth/10*8,canvasHeight/2+20-grid/8+1,1,grid/4)
+
+        startMenu();
+    }
+
+    //ゲームスタート
+    const gameStart = () =>{
+        snake.x = 0;
+        snake.y = canvasHeight/grid/2;
+        snake.nowBody = [];
+        snake.len = 4;
+        snake.dx = 1;
+        snake.dy = 0;
+        item.rnd();
+        clickKey();
+        looper = setInterval("loop()",1000/speed);
+    }
+
+    displayStart();
+</script>
+</html>
