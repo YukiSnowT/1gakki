@@ -1,0 +1,122 @@
+@charset "utf-8";
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "メイリオ", Meiryo, "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+	font-size: 87.5%;
+	line-height: 1.4;
+}
+
+#main{
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	margin: auto;
+	background-color: red;
+	width: 1000px;
+	height: 800px;
+}
+
+#menu{
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	border: 5px double;
+}
+
+.menu{
+	margin: 3px 5px 0 5px;
+	width: 120px;
+	height: 65px;
+	background-color: #eee;
+	border: 5px outset;
+}
+
+.menu:active{
+	border: 5px inset;
+}
+
+#buy{
+	background: url(img/tesumenu1.png);
+	cursor: pointer;
+}
+#buy:hover{
+	background: url(img/tesumenu1over.png);
+}
+#sell{
+	background: url(img/tesumenu2.png);
+	cursor: pointer;
+}
+#sell:hover{
+	background: url(img/tesumenu1over.png);
+}
+#info{
+	background: url(img/tesumenu3.png);
+	cursor: pointer;
+}
+#info:hover{
+	background: url(img/tesumenu1over.png);
+}
+#item{
+	background: url(img/tesumenu4.png);
+	cursor: pointer;
+}
+#item:hover{
+	background: url(img/tesumenu1over.png);
+}
+#move{
+	background: url(img/tesumenu5.png);
+	cursor: pointer;
+}
+#move:hover{
+	background: url(img/tesumenu1over.png);
+}
+
+#menuTitle{
+	background: url(img/testmenulogo.png);
+	text-align: center;
+	height: 55px;
+}
+
+#game{
+	display: flex;
+	background-color: #ddf;
+	width: 1000px;
+	height: 600px;
+}
+
+#message{
+	display: flex;
+	background-color: #8ffd;
+	width: 970px;
+	height: 170px;
+	border: 15px ridge ;
+	cursor: default;
+}
+
+#kaogura{
+	/* background: url(img/testface.png); */
+	width: 160px;
+	height: 160px;
+	border: 5px ridge;
+}
+
+h1{
+	padding-left: 0.3em;
+	line-height: 0.7em;
+	color: #fff;
+	font-size: 2.4em;
+	font-family: monospace;
+}
+
+h2{
+	padding-top: 0.3em;
+	padding-left: 0.3em;
+	line-height: 0.7em;
+}
+
+#map{
+	background: url("img/testmap.png");
+	width: 845px;
+}
