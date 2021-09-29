@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas" width="800px" height="600px" style="background-color: black; cursor: none;"></canvas>
+    <label>
+        <br>答え：<input type="text" id="inp" name="name" size="20">
+        <input type="submit" id="sub" value="test">
+    </label>
+</body>
+<script>
+    const cv = document.getElementById("canvas");
+    const ctx = cv.getContext('2d');
+    const cx = cv.width*0.8;
+    const cy = cv.height*0.8;
+    const colorList = ["#000","#111","#222","#333","#444","#555","#666","#777","#888","#999","#aaa","#bbb","#ccc","#ddd","#eee","#fff"]
+    let result = false;
+    let partsSize = 80;
+    let lightSize = 10;
+    let overLap = Math.floor(Math.min(cx,cy)/partsSize)-1 ;
+    
+    const quiz = class {
+        constructor(answer, parts, mode) {
+            this.answer = answer;
+            this.parts = parts;
+            this.mode = mode;
+        }
+        setParts(){
+            if(this.parts.length>overLap){
+                return null;
+            }else{
+                let p = [];
+                let kari = [];
+                for(let i=0;i<this.parts.length;i++){
+                    let rx = Math.floor(Math.random()*cx);
+                    while(p.some((n)=>(Math.abs(rx-n[0])<partsSize))){
+                        rx = Math.floor(Math.random()*cx);
+                    }
+                    p.push([rx]);
+                }
+                for(let j=0;j<this.parts.length;j++){
+                    let ry = Math.floor(Math.random()*cy);
+                    while(kari.some((n)=>(Math.abs(ry-kari)<partsSize))){
+                        ry = Math.floor(Math.random()*cy);
+                    }
+                    p[j].push(ry);
+                }
+                return p;
+            }
+        }
+    }
+
+    const quiz1 = new quiz("時計",["日","寺","言","十"],2)
+    const quiz2 = new quiz("薬草",["サ","サ","楽","日","十"],2)
+    const quiz3 = new quiz("荒地",["サ","亡","川","土","也"],2)
+
+    let allQuiz = [];
+    for(i=1;;i++){
+        try{
+            if(eval("quiz" + i).mode!==null){
+                allQuiz.push(eval("quiz" + i));
+            }
+        }catch{
+            break;
+        }
+    }
+    
+    let nowQuiz = quiz2;
+
+
+    let xxx = nowQuiz.setParts()
+
+    //ライト移動処理
+    const mouseMoving = () => {
+        cv.addEventListener("mousemove",function(e){
+            if(!result){
+                ctx.clearRect(0, 0, cv.width, cv.height);
+                for(i=1;i<colorList.length;i++){
+                    ctx.beginPath();
+                    ctx.fillStyle=colorList[i];
+                    ctx.arc(e.offsetX,e.offsetY,lightSize*(32-i)/32,0,(Math.PI/180)*360);
+                    ctx.fill();
+                    ctx.closePath();
+                }
+                ctx.fillStyle = "#000"
+                ctx.font = "bold " + partsSize + "px sans-serif";
+                ctx.textBaseline = "top";
+                ctx.textAlign = "left";
+                for(j=0;j<nowQuiz.parts.length;j++){
+                    ctx.fillText(nowQuiz.parts[j],xxx[j][0],xxx[j][1])
+                }
+            }
+        })
+    }
+
+    //送信時処理
+    const clickSub = () =>{
+        document.getElementById("sub").addEventListener("click",(e)=>{
+            e.preventDefault();
+            if(!result){
+                const getInp = document.getElementById("inp").value;
+                if(nowQuiz.answer==getInp){
+                    result=true;
+                    ctx.fillStyle = "#fff"
+                    ctx.fillRect(5, 5, cv.width-10, cv.height-10);
+                    ctx.fillStyle = "#000"
+                    ctx.font = "bold " + partsSize + "px sans-serif";
+                    ctx.textBaseline = "top";
+                    ctx.textAlign = "left";
+                    for(j=0;j<nowQuiz.parts.length;j++){
+                        ctx.fillText(nowQuiz.parts[j],xxx[j][0],xxx[j][1])
+                    }
+                    ctx.fillStyle="#fdd";
+                    ctx.strokeStyle="#00f";
+                    ctx.textBaseline="middle";
+                    ctx.textAlign="center";
+                    ctx.lineWidth=cv.width/120;
+                    ctx.font = "bold " + cv.width/6 + "px sans-serif";
+                    ctx.fillText("正解",cv.width/2,cv.height/2)
+                    ctx.strokeText("正解",cv.width/2,cv.height/2)
+                    document.getElementById("sub").value = "次へ"
+                }else{
+                    result=true;
+                    ctx.clearRect(0,0,cv.width,cv.height);
+                    ctx.fillStyle="#dfd";
+                    ctx.strokeStyle="#00f";
+                    ctx.textBaseline="middle";
+                    ctx.textAlign="center";
+                    ctx.lineWidth=cv.width/120;
+                    ctx.font = "bold " + cv.width/6 + "px sans-serif";
+                    ctx.fillText("不正解",cv.width/2,cv.height/2)
+                    ctx.strokeText("不正解",cv.width/2,cv.height/2)
+                    document.getElementById("sub").value = "リトライ"
+
+                }
+            }
+        })
+    }
+
+    mouseMoving();
+    clickSub();
+</script>
+</html>
