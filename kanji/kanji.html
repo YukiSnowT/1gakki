@@ -60,6 +60,8 @@
     const quiz3 = new quiz("荒地",["サ","亡","川","土","也"],2)
 
     let allQuiz = [];
+    let userQuiz = [];
+
     for(i=1;;i++){
         try{
             if(eval("quiz" + i).mode!==null){
@@ -70,10 +72,27 @@
         }
     }
     
+    //配列のランダム並べ替え
+    const rndQuizSet = (quizLen)=>{
+        let n = [];
+        let m = [];
+        for(i=0;i<quizLen.length;i++){
+            n.push(quizLen[i]);
+        }
+        while(n.length!==0){
+            let j = Math.floor(Math.random()*n.length);
+            m.push(n[j]);
+            n.splice(j,1);
+        }
+        return m;
+    }
+
     let nowQuiz = quiz2;
 
 
     let xxx = nowQuiz.setParts()
+
+
 
     //ライト移動処理
     const mouseMoving = () => {
