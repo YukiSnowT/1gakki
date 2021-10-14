@@ -43,6 +43,7 @@
     let gameover = true;
     let loopGame = null;
     let gamestart = true;
+    let highScore = Math.max(localStorage.getItem("maxScore"),0);
     let ctx_cave = document.getElementById("cave").getContext('2d');
 
     //次回の壁の増減
@@ -226,6 +227,9 @@
             x.textContent="洞窟までたどり着けなかった！　Game Over";
         }else{
             x.textContent="記録：" + Math.round((count-400)*0.1) + "m　Game Over";
+            if(highScore<Math.round((count-400)*0.1)){
+                localStorage.setItem("maxScore",Math.round((count-400)*0.1));
+            }
         }
         if(level>19){
             document.getElementById("retry").innerText = "隠しコマンド：スタート画面で「＠」キーを押すと最初から難しい洞窟で開始\n「R」キーでリトライ"
@@ -246,7 +250,9 @@
         ctx.fillText("洞窟は進めば進むほど、高低差が激しく難しくなる", 140, 330);
         ctx.fillText("洞窟の壁にぶつかるとゲームオーバー", 140, 360);
         ctx.font = "30px center";
-        ctx.fillText("Spaceキーを押して開始", 200, 450);
+        ctx.fillText("ハイスコア：" + highScore + "m", 200, 450);
+        ctx.font = "30px center";
+        ctx.fillText("Spaceキーを押して開始", 200, 500);
     }
 
     const openGame1 = () =>{
