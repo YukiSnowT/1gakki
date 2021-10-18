@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #all{
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+        }
+        #canvas{
+            margin: auto;
+            background-color: #9ff;
+            border: 5px ridge #ccc;
+        }
+        #menu{
+            margin: 1px auto 0 auto;
+            display: flex;
+            flex-direction: column;
+            width: 340px;
+            height: 500px;
+            overflow-y: scroll;
+            /* background-color: aqua; */
+        }
+        .menuLevel{
+            margin: auto;
+            display: flex;
+            border: 5px ridge #ccc;
+            margin: 2px auto 0 auto;
+        }
+        .imgLevel{
+            background-color: #000;
+        }
+        .menuLevelInner{
+            width: 220px;
+        }
+        .textLevel{
+            /* test */
+            background-color: #fdf;
+        }
+        .buttonLevel{
+            width: 140px;
+            height: 28px;
+            margin: 0 0 0 auto;
+            padding: 0 5px 0 0;
+            text-align: right;
+            border: 2px outset;
+        }
+        .buttonLevel:active{
+            border: 2px inset;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="all">
+        <canvas id="canvas" width="300px" height="200px"></canvas>
+        <div id="menu">
+            <!-- ここにメニューが入る -->
+        </div>
+    </div>
+</body>
+<script>
+
+
+    const cvs = document.getElementById("canvas");
+    const ctx = cvs.getContext('2d');
+    const ctxm = [];
+    const digit = ["万","億","兆","京","垓","𥝱","穣","溝","澗","正","載","極","恒河沙","阿僧祇","那由他","不可思議","無量大数"]
+    const worker = ["test1","test2","test3","test4","test5","test6","test7","test8","test9","test10","test11","test12","test13","test14","test15","test16","test17","test18","test19","test20"]
+
+    let autoSpeedSum = 0;
+    let clickPoint = 0;
+    let autoSpeedLevel = [];
+    let priceLevel = [100];
+    
+    
+    //レベル帯作成
+    const putMenu = () =>{
+        const num = autoSpeedLevel.length;
+        //レベル帯の配置場所作成
+        let levelDiv = document.createElement("div");
+        levelDiv.setAttribute("id", "level" + num);
+        levelDiv.setAttribute("class", "menuLevel");
+
+        //レベル帯のキャンバス作成
+        let levelcvs = document.createElement("canvas");
+        levelcvs.setAttribute("id","img" + num);
+        levelcvs.setAttribute("class","imgLevel");
+        levelcvs.setAttribute("width",80);
+        levelcvs.setAttribute("height",80);
+        ctxm.push(levelcvs.getContext('2d'));
+
+        //レベル帯の中身作成
+        let levelDivInner = document.createElement("div");
+        levelDivInner.setAttribute("id", "levelInner" + num);
+        levelDivInner.setAttribute("class", "menuLevelInner");
+
+        //レベル帯の文章表示作成
+        let levelText1 = document.createElement("div");
+        levelText1.setAttribute("text", "text" + num);
+        levelText1.setAttribute("class", "textLevel");
+        levelText1.innerHTML="test";
+
+        //レベル帯の文章表示作成
+        let levelText2 = document.createElement("div");
+        levelText2.setAttribute("text", "text" + num);
+        levelText2.setAttribute("class", "textLevel");
+        levelText2.innerText="LEVEL:0";
+
+        //レベル帯の購入ボタン作成
+        let levelButton = document.createElement("div");
+        levelButton.setAttribute("id","button" + num);
+        levelButton.setAttribute("class", "buttonLevel");
+        levelButton.textContent = changePrice(priceLevel[num]) + "G"
+
+        //設置
+        levelDivInner.appendChild(levelText1);
+        levelDivInner.appendChild(levelText2);
+        levelDivInner.appendChild(levelButton);
+        levelDiv.appendChild(levelcvs);
+        levelDiv.appendChild(levelDivInner);
+        document.querySelector("#menu").appendChild(levelDiv);
+
+        autoSpeedLevel.push(0);
+        // priceLevel.push(100);
+        if(num<6){
+            priceLevel.push((num+2)*(num+2)*(num+2)*Math.pow(10,(num+2)))
+        }else{
+            let x = Math.floor((num-2)/4);
+            let y = (num+2)*(num+2)*(num+2)*(Math.pow(10,(num-2)%4));
+            let z = x*1000000000000+y*10000
+            priceLevel.push(z)
+        }
+    }
+
+    //特殊数繰り上げ。t0000kkkknnnn
+    const changePriceNum = (num) =>{
+        let n = num;
+        let t = 0;
+        if(n%1000000000000>99999999){
+            let k = Math.round((n%1000000000000 - n%10000)/10000);
+            n += 1000000000000;
+            n = n - n%1000000000000 + k;
+        }
+        return n;
+    }
+
+    //与えられた特殊数を文字列に変換
+    const changePrice = (price) =>{
+        let p = changePriceNum(price);
+        let n = String(p);
+        let simo4 = p%10000;
+        let simo8 = (p%100000000 - simo4)/10000;
+        let d = Math.floor(p/1000000000000);
+        let dd = digit[d-1];
+        if(simo4===0){
+            simo4 = "";
+            dd = "";
+        }
+        if(p<10000){}
+        else if(p<100000000){
+            n = simo8 + "万" + simo4
+        }else if(p<17000000000000){
+            n = simo8 + digit[d] + simo4 + dd;
+        }else{
+            n = "(" + changePrice(p-17000000000000) + ")無量大数"
+        }
+        return n;
+    }
+
+    const clickButton = (n) =>{
+        document.getElementById(n).addEventListener("click",function(){
+            if(n.match(/^button[0-9]{1,}/)!==null){
+                let num = Number(n.split("n")[1]);
+
+            }
+        })
+    }
+
+    putMenu();
+    putMenu();
+</script>
+</html>
