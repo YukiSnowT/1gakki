@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    table{
+        text-align: center;
+        margin: auto;
+        border-radius: 5px;
+    }
+    table, td, th {
+         border: 2px black solid;
+    }
+</style>
+<body>
+    <form id="form" action="#">
+        <input type="text" id="text" value="TRPG">
+        <input type="button" onclick="kensaku()" value="検索">
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <!-- <td>ID</td> -->
+                <td>画像</td>
+                <td>タイトル</td>
+            </tr>
+        </thead>
+        <tbody id="books">
+        </tbody>
+    </table>
+</body>
+<script>
+
+
+let url_t = "https://app.rakuten.co.jp/services/api/BooksTotal/Search/20170404?format=json&keyword=TRPG&booksGenreId=000&applicationId=1027650470471553481"
+
+
+const goKensaku = (e) =>{
+    if(e.keyCode===13){
+        kensaku();
+    }
+}
+
+const kensaku = () =>{
+    const t = document.getElementById("text").value;
+    url_t = "https://app.rakuten.co.jp/services/api/BooksTotal/Search/20170404?format=json&keyword=" + t + "&booksGenreId=000&applicationId=1027650470471553481"
+    const d = document.getElementById("books");
+    while(d.firstChild){
+        d.removeChild(d.firstChild);
+    }
+    getData(url_t);
+}
+
+
+const getData = async (url) => {
+    const response = await fetch(url);
+    const data = await response.json();
+    // console.log(data)
+    // console.log(data.Items[0].Item.largeImageUrl)
+    for(i=0;i<data.Items.length;i++){
+        await putData(data,i)
+    }
+}
+
+const putData = (data,id) =>{
+    let x = document.createElement("tr");
+    let x1 = document.createElement("td");
+    let x2 = document.createElement("td");
+    let x3 = document.createElement("td");
+    let ximg = document.createElement("img");
+    console.log(data)
+    console.log(data.Items[0].Item.title)
+    x1.textContent = id+1;
+    x2.textContent = data.Items[id].Item.title;
+    ximg.setAttribute("src",data.Items[id].Item.largeImageUrl);
+    x3.appendChild(ximg);
+    // x.appendChild(x1);
+    x.appendChild(x3);
+    x.appendChild(x2);
+    document.getElementById("books").appendChild(x);
+}
+
+document.getElementById("text").addEventListener('keypress', goKensaku);
+
+</script>
+</html>
