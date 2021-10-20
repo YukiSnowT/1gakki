@@ -7,6 +7,10 @@
     <title>Document</title>
 </head>
 <style>
+    form{
+        display: block;
+        margin: auto;
+    }
     table{
         text-align: center;
         margin: auto;
@@ -72,12 +76,17 @@ const putData = (data,id) =>{
     let x2 = document.createElement("td");
     let x3 = document.createElement("td");
     let ximg = document.createElement("img");
+    let aimg = document.createElement("a");
     console.log(data)
     console.log(data.Items[0].Item.title)
     x1.textContent = id+1;
     x2.textContent = data.Items[id].Item.title;
     ximg.setAttribute("src",data.Items[id].Item.largeImageUrl);
-    x3.appendChild(ximg);
+    aimg.setAttribute("href","https://search.rakuten.co.jp/search/mall/" + data.Items[id].Item.title + "/");
+    aimg.setAttribute("target","_blank");
+    aimg.setAttribute("rel","noopener noreferrer");
+    aimg.appendChild(ximg);
+    x3.appendChild(aimg);
     // x.appendChild(x1);
     x.appendChild(x3);
     x.appendChild(x2);
