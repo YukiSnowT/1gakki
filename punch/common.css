@@ -1,0 +1,50 @@
+@charset "utf-8";
+
+#all{
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+#canvas{
+    margin: auto;
+    background-color: #9ff;
+    border: 5px ridge #ccc;
+}
+#menu{
+    margin: 1px auto 0 auto;
+    display: flex;
+    flex-direction: column;
+    width: 340px;
+    height: 500px;
+    overflow-y: scroll;
+    /* background-color: aqua; */
+}
+.menuLevel{
+    margin: auto;
+    display: flex;
+    border: 5px ridge #ccc;
+    margin: 2px auto 0 auto;
+}
+.imgLevel{
+    background-color: #000;
+}
+.menuLevelInner{
+    width: 220px;
+}
+.textLevel{
+    /* test */
+    padding-left: 5px;
+    background-color: #fdf;
+}
+.buttonLevel{
+    height: 24px;
+    margin: 0 0 0 auto;
+    padding: 4px 5px 0 0;
+    text-align: right;
+    border: 2px outset;
+    font-size:14px;
+    cursor: pointer;
+}
+.buttonLevel:active{
+    border: 2px inset;
+}

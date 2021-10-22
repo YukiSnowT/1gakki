@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./common.css">
+</head>
+<body onselectstart="return false;">
+    <div id="all">
+        <canvas id="canvas" width="320px" height="200px"></canvas>
+        <div id="menu">
+            <!-- ここにメニューが入る -->
+        </div>
+    </div>
+</body>
+<script src="variable.js"></script>
+<script src="display.js"></script>
+<script src="caluculation.js"></script>
+<script src="click.js"></script>
+<script src="data.js"></script>
+<script>
+
+    //priceのテキスト
+    const priceText = (price) =>{
+        let karitext = currency;
+        if(price[1]!==0){
+            karitext = price[1] + digit[price[0]] + karitext; 
+        }
+        if(price[2]!==0){
+            karitext = price[2] + digit[price[0]+1] + karitext; 
+        }
+        return karitext;
+    }
+
+
+    //次のレベルをセット
+    const nextLevel = (price) =>{
+        let p = [price[0],0,0]
+        const n = autoSpeedLevel.length+1;
+        let x = price[2]*10000+price[1];
+        x = n*n*n*x
+        if(x>99999999){
+            p[0]++;
+            x = Math.floor(x/10000);
+        }
+        p[1]=x%10000;
+        p[2]=Math.floor(x/10000);
+        return p;
+    }
+
+
+    const mainAct = () =>{
+        //画像の切り替え
+        timeCount++;
+        if(timeCount>=300){
+            timeCount=0;
+        }
+        culSum();
+        if(timeCount%1==0){ //timeCount%30==0
+            for(i=0;i<myPrice.length;i++){
+                myPrice[i] += autoSpeedSum[i];
+            }
+            advMyprice();
+            displayMyprice();
+        }
+
+    }
+
+    //現在のautoSpeedSumの計算
+    const culSum = () =>{
+        for(i=0;i<autoSpeedSum.length;i++){
+            autoSpeedSum[i]=0
+        }
+        for(i=0;i<worker.length;i++){
+            let n = [0,0,0];
+            if(autoSpeedLevel[i]!==undefined){
+                n[0] = workerSpeed[i][0]
+                n[1] = workerSpeed[i][1]*autoSpeedLevel[i]
+                n[2] = workerSpeed[i][2]*autoSpeedLevel[i]
+                n = advprice(n);
+                autoSpeedSum[n[0]] += n[1];
+                autoSpeedSum[n[0]+1] += n[2];
+            }
+        }
+    }
+
+
+
+    const clickButton = (n) =>{
+        document.getElementById(n).addEventListener("click",function(){
+            if(n.match(/^button[0-9]{1,}/)!==null){
+                let num = Number(n.split("n")[1]);
+                let needMoney = priceLevel[num][2]*10000+priceLevel[num][1]
+                if(subcheck(priceLevel[num])&&autoSpeedLevel[num]<100){
+                    subPrice(priceLevel[num]);
+                    if(autoSpeedLevel[num]===0&&num<worker.length-1){
+                        putMenu()
+                    }
+                    autoSpeedLevel[num]++;
+                    needMoney = (1+(autoSpeedLevel[num])*0.01)*needMoney;//レベルアップ処理
+                    if(needMoney>99999999){
+                        priceLevel[num][0]++;
+                        needMoney = Math.round(needMoney/10000);
+                    }
+                    if(priceLevel[num][0]>16){
+                        priceLevel[num][0]=17;
+                        priceLevel[num][1]=9999;
+                        priceLevel[num][2]=9999;
+                        console.log(priceLevel[num]);
+                    }
+                    priceLevel[num][1]=Math.round(needMoney%10000);
+                    priceLevel[num][2]=Math.floor(needMoney/10000);
+                    if(autoSpeedLevel[num]==100){
+                        document.getElementById("button" + num).textContent = "MAX!"
+                    }else{
+                        document.getElementById("button" + num).textContent = priceText(priceLevel[num]);
+                    }
+                    let we = priceText(priceLevel[num]).length+1-String(priceLevel[num][1]).length/2-String(priceLevel[num][2]).length/2;
+                    document.getElementById("button" + num).setAttribute("style", "width:"+Math.min(we*15,210)+"px")
+                    document.getElementById("text2_" + num).textContent="LEVEL:" + autoSpeedLevel[num]
+                    displayMyprice();
+                    //レベルアップの処理
+                }
+            }
+        })
+    }
+    setSpeed();
+    putMenu();
+
+
+</script>
+</html>
