@@ -85,7 +85,11 @@
         // ctx.clearRect(0, cvy/1.5,cvx/2.5,cvy/1.5);
         ctx.fillStyle='#000';
         ctx.fillRect(0, cvy/1.5,cvx/2,cvy/1.5);
-        ctx.fillStyle='#fff';
+        if(subcheck(clickPrice)&&clickLevel<100){
+            ctx.fillStyle=goodColor;
+        }else{
+            ctx.fillStyle='#fff';
+        }
         ctx.fillRect(1,cvy/1.5+1,cvx/2-2,cvy/1.5-69);
         ctx.font = fsize + "px sans";
         ctx.fillStyle='#000';
@@ -93,7 +97,12 @@
         ctx.textBaseline = "top";
         ctx.fillText("現在レベル：" + clickLevel,10,cvy/1.5+5);
         ctx.fillText("１回の値段：" + priceText(clickGet),5,cvy/1.5+5+fsize+cvy/25);
-        ctx.fillText("次のレベル：" + priceText(clickPrice) ,5,cvy/1.5+5+fsize*2+cvy/25*2);
+        if(clickLevel<100){
+            ctx.fillText("次のレベル：" + priceText(clickPrice) ,5,cvy/1.5+5+fsize*2+cvy/25*2);
+        }else{
+            ctx.fillText("次のレベル：LEVELMAX!",5,cvy/1.5+5+fsize*2+cvy/25*2);
+        }
+
         ctx.fillRect(3,cvy/1.5+8+fsize,cvx/2-6,1);
         ctx.fillRect(3,cvy/1.5+8+fsize*2+cvy/25,cvx/2-6,1);
     }

@@ -9,7 +9,7 @@
 <body>
     <div style="display: flex; width: 1200px;">
         <canvas id="canvas" width="800px" height="560px" style="background-color: black;"></canvas>
-        <canvas id="canvasC" width="560px" height="560px" style="background-color: black;"></canvas>
+        <!-- <canvas id="canvasC" width="560px" height="560px" style="background-color: black;"></canvas> -->
     </div>
     <canvas id="canvasK" width="420px" height="420px" style="background-color: black;"></canvas>
 </body>
@@ -27,7 +27,7 @@
     const meiroH = 400/blockWH;
     const ctx = document.getElementById("canvas").getContext('2d');
     const ctxr = document.getElementById("canvasK").getContext('2d');
-    const ctxc = document.getElementById("canvasC").getContext('2d');
+    // const ctxc = document.getElementById("canvasC").getContext('2d');
 
     let result = false;
     let list = []; //(x,y)の情報はlist[y][x],0で壁、1で偶数道、2で未確認奇数道、3で確認済み偶数道、4でゴール
@@ -598,21 +598,21 @@
         }
     }
 
-    const displayControler = ()=>{
-        const ccw = document.getElementById("canvasC").width;
-        const cch = document.getElementById("canvasC").height;
-        ctxc.fillStyle = "#ddd"
-        ctxc.strokeStyle = "#000"
-        ctxc.fillRect(ccw*0.375,cch*0.125,ccw*0.25,cch*0.75)
-        ctxc.fillRect(ccw*0.125,cch*0.375,ccw*0.75,cch*0.25)
-        ctxc.beginPath();
-        ctxc.fillStyle = "#777"
-        ctxc.moveTo(ccw*0.5,cch*0.15);
-        ctxc.lineTo(ccw*0.4,cch*0.35);
-        ctxc.lineTo(ccw*0.6,cch*0.35);
-        ctxc.fill();
-        ctxc.closePath();
-    }
+    // const displayControler = ()=>{
+    //     const ccw = document.getElementById("canvasC").width;
+    //     const cch = document.getElementById("canvasC").height;
+    //     ctxc.fillStyle = "#ddd"
+    //     ctxc.strokeStyle = "#000"
+    //     ctxc.fillRect(ccw*0.375,cch*0.125,ccw*0.25,cch*0.75)
+    //     ctxc.fillRect(ccw*0.125,cch*0.375,ccw*0.75,cch*0.25)
+    //     ctxc.beginPath();
+    //     ctxc.fillStyle = "#777"
+    //     ctxc.moveTo(ccw*0.5,cch*0.15);
+    //     ctxc.lineTo(ccw*0.4,cch*0.35);
+    //     ctxc.lineTo(ccw*0.6,cch*0.35);
+    //     ctxc.fill();
+    //     ctxc.closePath();
+    // }
 
     makeRoad(0,0);
     ctxr.clearRect(0,0,440,440)
@@ -625,7 +625,7 @@
         player.displayBase()
     }
     checkPoint();
-    displayControler();
+    // displayControler();
     const start = new Date();
     clickKey();
 
