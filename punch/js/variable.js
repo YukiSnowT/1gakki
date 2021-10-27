@@ -19,7 +19,7 @@
     let loopEvent = null;
 
     let savedata = null;//セーブデータ
-    let continuefrag = false;//
+    let continuefrag = true;//
     let viewXY = [0,0];//canvas上でのカーソルの場所
 
     let autoSpeedSum = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];//秒間加算金額

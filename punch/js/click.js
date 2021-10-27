@@ -45,7 +45,7 @@ const clickEvent = () =>{
             gameStart = true;
             //コンテニュー、データ消去の分岐
             displayMainGame();
-            loopEvent = setInterval(mainAct,1000/30)////1000/30に変更→baseも
+            loopEvent = setInterval(mainAct,1000/3000)////1000/30に変更→baseも
         }
     })
 }

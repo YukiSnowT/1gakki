@@ -41,7 +41,7 @@
         }
         menuLevelAble();
         culSum();
-        if(timeCount%30==0){ //timeCount%30==0に変更→clickも
+        if(timeCount%1==0){ //timeCount%30==0に変更→clickも
             for(i=0;i<myPrice.length;i++){
                 myPrice[i] += autoSpeedSum[i];
                 sumMyPrice[i] += autoSpeedSum[i];
