@@ -7,7 +7,7 @@
 }
 #canvas{
     margin: auto;
-    background-color: #9ff;
+    background-color: #000;
     border: 5px ridge #ccc;
 }
 #menu{
@@ -36,7 +36,7 @@
     padding-left: 5px;
     background-color: #fdf;
 }
-.buttonLevel{
+.buttonLevel,.buttonLevelG{
     height: 24px;
     margin: 0 0 0 auto;
     padding: 4px 5px 0 0;
@@ -45,6 +45,15 @@
     font-size:14px;
     cursor: pointer;
 }
-.buttonLevel:active{
+
+.buttonLevel{
+    background-color: #fff;
+}
+.buttonLevelG{
+    background-color: #fc0;
+}
+
+
+.buttonLevel:active,.buttonLevelG:active{
     border: 2px inset;
 }
