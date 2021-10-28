@@ -81,12 +81,12 @@
             for(i=0;i<autoSpeedSum.length;i++){
                 autoSpeedSum[i]=0
             }
-            for(i=0;i<worker.length;i++){
+            for(i=0;i<faceName.length;i++){
                 let n = [0,0,0];
                 if(autoSpeedLevel[i]!==undefined){
                     n[0] = workerSpeed[i][0]
-                    n[1] = workerSpeed[i][1]*autoSpeedLevel[i]
-                    n[2] = workerSpeed[i][2]*autoSpeedLevel[i]
+                    n[1] = workerSpeed[i][1]*autoSpeedLevel[i]*autoSpeedLevel[i]//加算速度
+                    n[2] = workerSpeed[i][2]*autoSpeedLevel[i]*autoSpeedLevel[i]
                     n = advprice(n);
                     autoSpeedSum[n[0]] += n[1];
                     autoSpeedSum[n[0]+1] += n[2];

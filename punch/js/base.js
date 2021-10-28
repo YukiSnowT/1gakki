@@ -41,7 +41,7 @@
         }
         menuLevelAble();
         culSum();
-        if(timeCount%1==0){ //timeCount%30==0に変更→clickも
+        if(timeCount%30==0){ //timeCount%30==0に変更→clickも
             for(i=0;i<myPrice.length;i++){
                 myPrice[i] += autoSpeedSum[i];
                 sumMyPrice[i] += autoSpeedSum[i];
@@ -59,11 +59,14 @@
                 let needMoney = priceLevel[num][2]*10000+priceLevel[num][1]
                 if(subcheck(priceLevel[num])&&autoSpeedLevel[num]<100){
                     subPrice(priceLevel[num]);
-                    if(autoSpeedLevel[num]===0&&num<worker.length-1){
-                        putMenu(autoSpeedLevel.length)
+                    if(autoSpeedLevel[num]===0){
+                        displayFace(faceName[num][1],faceName[num][2],ctxm[num]);
+                        if(num<faceName.length-1){
+                            putMenu(autoSpeedLevel.length);
+                        }
                     }
                     autoSpeedLevel[num]++;
-                    needMoney = (1+(autoSpeedLevel[num])*0.01)*needMoney;//レベルアップ処理
+                    needMoney = Math.floor(1.5*needMoney);//レベルアップ処理
                     if(needMoney>99999999){
                         priceLevel[num][0]++;
                         needMoney = Math.round(needMoney/10000);
@@ -71,12 +74,13 @@
                     priceLevel[num][1]=Math.round(needMoney%10000);
                     priceLevel[num][2]=Math.floor(needMoney/10000);    
                     if(priceLevel[num][0]>16){
-                        priceLevel[num][0]=16;//次回ここのチェックから
+                        priceLevel[num][0]=16;
                         priceLevel[num][1]=9999;
                         priceLevel[num][2]=9999;
                     }
                     if(autoSpeedLevel[num]==100){
-                        document.getElementById("button" + num).textContent = "MAX!"
+                        document.getElementById("button" + num).setAttribute("class", "buttonLevelM");
+                        document.getElementById("button" + num).textContent = "LEVEL MAX"
                     }else{
                         document.getElementById("button" + num).textContent = priceText(priceLevel[num]);
                     }
@@ -84,7 +88,7 @@
                     document.getElementById("text2_" + num).textContent="LEVEL:" + autoSpeedLevel[num]
                     
                     displayMyprice();
-                    //レベルアップの処理
+                    
                     
                 }
             }

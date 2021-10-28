@@ -4,6 +4,7 @@ const start = () =>{
     setMonsterImage();
     imgLoad(systemImages,loadSystemImage);
     imgLoad(monsterImages,loadMonsterImage);
+    imgLoad(faceImages,loadFaceImage);
     setSpeed();
     const times = setInterval(function (){
         if(loadTime==0){

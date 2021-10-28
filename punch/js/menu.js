@@ -9,8 +9,8 @@
         let levelcvs = document.createElement("canvas");
         levelcvs.setAttribute("id","img" + num);
         levelcvs.setAttribute("class","imgLevel");
-        levelcvs.setAttribute("width",80);
-        levelcvs.setAttribute("height",80);
+        levelcvs.setAttribute("width",faceSize);
+        levelcvs.setAttribute("height",faceSize);
         ctxm.push(levelcvs.getContext('2d'));
 
         //レベル帯の中身作成
@@ -22,7 +22,7 @@
         let levelText1 = document.createElement("div");
         levelText1.setAttribute("id", "text1_" + num);
         levelText1.setAttribute("class", "textLevel");
-        levelText1.innerHTML=worker[num] + " " + priceText(workerSpeed[num]) + "/秒";
+        levelText1.innerHTML=faceName[num][0] + " " + priceText(workerSpeed[num]) + "/秒";
 
         //レベル帯の文章表示作成
         let levelText2 = document.createElement("div");
@@ -41,7 +41,8 @@
         if(autoSpeedLevel[num]==undefined||autoSpeedLevel[num]<100){
             levelButton.textContent = priceText(priceLevel[num]);
         }else{
-            levelButton.textContent = "MAX!";
+            levelButton.textContent = "LEVEL MAX";
+            levelButton.setAttribute("class", "buttonLevelM");
         }
         levelButton.setAttribute("style", "width:210px")
 
@@ -58,6 +59,12 @@
             autoSpeedLevel.push(0);
             priceLevel.push(nextLevel(priceLevel[priceLevel.length-1]));
         }
+        if(num+2==priceLevel.length&&autoSpeedLevel[faceName.length-1]==0){
+            displayFace(faceName[num][1],faceName[num][2],ctxm[num],0.5);
+            ctxm[num].drawImage(loadSystemImage[2],0,0,faceSize,faceSize);
+        }else{
+            displayFace(faceName[num][1],faceName[num][2],ctxm[num]);
+        }
     }
 
 
@@ -68,9 +75,11 @@
             if(e!==null){
                 if(subcheck(priceLevel[j])&&autoSpeedLevel[j]<100){
                     e.className = "buttonLevelG"
-                }else{
+                }else if(autoSpeedLevel[j]<100){
                     e.className = "buttonLevel"
-                }    
+                }else{
+                    e.className = "buttonLevelM"
+                }
             }
         }
     }

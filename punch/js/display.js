@@ -105,17 +105,22 @@
 
     //クリック箇所にパンチアニメ表示
     const displayAnimePunch = () =>{
-        if(animationP>25){
-            ctx.globalAlpha=1
+        if(animationM>50){
+            if(animationP>25){
+                ctx.globalAlpha=1
+            }else{
+                ctx.globalAlpha=animationP/25;
+            }
+            ctx.drawImage(loadSystemImage[1],animationPXY[0],animationPXY[1],cvy/5,cvy/5);
+            animationP--;
+            if(animationP<0){
+                animationP = 0
+            }
+            ctx.globalAlpha=1;
         }else{
-            ctx.globalAlpha=animationP/25;
+            ctx.globalAlpha=1;
+            animationP=0;
         }
-        ctx.drawImage(loadSystemImage[1],animationPXY[0],animationPXY[1],cvy/5,cvy/5);
-        animationP--;
-        if(animationP<0){
-            animationP = 0
-        }
-        ctx.globalAlpha=1;
     }
 
     //モングラ表示
@@ -141,4 +146,20 @@
         ctx.font = "bold" +  Math.max(cvy/20,10) + "px sans";
         ctx.fillText(msg1 + monsterName[monsterImgNum] + msg2,cvx/2,cvy/1.5,cvx)
         // ctx.strokeText(monsterName[monsterImgNum] + msg,cvx/2,cvy/1.5,cvx)
+    }
+
+
+    //顔グラ表示。引数は画像番号、内部番号、描画場所、透明度。内部番号は上が1234、下が5678
+    const displayFace = (faceImgNum,inImgNum,context,alp=1) =>{
+        const face = loadFaceImage[faceImgNum];
+        const faceX = face.width;
+        const faceY = face.height;
+        const sWidth = faceX/4;
+        const sHeight = faceY/2;
+        const sx = sWidth * ((inImgNum-1)%4);
+        const sy = sHeight * Math.floor((inImgNum-1)/4);
+        context.globalAlpha = alp;
+        context.clearRect(0,0,faceSize,faceSize);
+        context.drawImage(face,sx,sy,sWidth,sHeight,0,0,faceSize,faceSize);
+        context.globalAlpha = 1;
     }
