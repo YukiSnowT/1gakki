@@ -8,22 +8,25 @@
     // const worker = ["test1","test2","test3","test4","test5","test6","test7","test8","test9","test10","test11","test12","test13","test14","test15","test16","test17","test18","test19","test20"]
     const degree = ["自称","独り身の","家庭を守る","街角の","ストリートの","近所で噂の","村一番の","街一番の","有名人の","地方の","誰もが知る","小国の","大国の","国家連合の","大陸を制する","七つの海を制した","空を制覇した","世界一の","伝説の","この星全ての","惑星系の","神話に語られる","銀河系の","銀河群の","銀河団の","超銀河団の","観測可能限界の","全宇宙を統べる","四次元世界の","時空を超越した","多元宇宙の","神となった","創世神","ただの"];
     const monsterName = ["オモチ","オオコウモリ","マンドラゴラ","オオサソリ","ゴブリン","ジャイアントスネーク","スケルトン","プチドラゴン","デビルプラント","スライム","ゲイザー","ゴーレム","ワイバーン","ミミック","ギガンテス","グリフォン","ジャイアントワーム","オーガ","ガーゴイル","暗黒騎士","キマイラ","死神","月の怪物","機械仕掛けの巨人","異次元の猟犬","魔王","真魔王","邪龍","邪龍（覚醒）","オモチ（変異種）","無貌の神","名状しがたいもの","万物の母","外なる知性","万物の王","全てを作りしもの"];
-    const faceName = [["子供",4,1],["町娘",0,4],["ごろつき",7,2],["家政婦",2,6],["木こり",3,8],["盗賊",1,1],["兵士",6,6],["狩人",1,2],["拳法家",0,5],["剣士",5,4],["SP",8,6],["魔法使い",5,5],["兵団長",6,5],["怪盗",5,8],["軍人",0,2],["旅人",0,1],["特殊部隊",8,8],["忍者",9,7],["堕天使",4,5],["女神",4,6],["星の戦士",4,5],["深淵の主",4,6]];
+    const faceName = [["子供",4,1],["町娘",0,4],["ごろつき",7,2],["家政婦",2,6],["木こり",3,8],["盗賊",1,1],["兵士",6,6],["狩人",1,2],["拳法家",0,5],["剣士",5,4],["SP",8,6],["魔法使い",5,5],["兵団長",6,5],["怪盗",5,8],["軍人",0,2],["旅人",0,1],["特殊部隊",8,8],["忍者",9,7],["堕天使",4,5],["女神",4,6],["星の戦士",9,1],["深淵の主",9,2]];
 
     const currency = "G"
     const faceSize = 80;
     const goodColor = "#fc0"
-    const systemImages = ["./img/system/opening01.jpg","./img/system/effect01.png","./img/system/lock01.png"];
-    const monsterImages = [];
-    const faceImages = ["./img/face/vxo01.png","./img/face/vxo02.png","./img/face/vxo03.png","./img/face/vxo04.png","./img/face/vxo05.png","./img/face/vxo07.png","./img/face/vxo08.png","./img/face/vxo09.png","./img/face/vxo11.png","./img/face/vxo14.png"];
+    const systemImages = ["./img/system/opening01.jpg","./img/system/effect01.png","./img/system/lock01.png","./img/system/button01.png","./img/system/button02.png","./img/system/message01.png"];
+    const monsterImages = [];//下で格納
+    const faceImages = ["./img/face/vxo01.png","./img/face/vxo02.png","./img/face/vxo03.png","./img/face/vxo04.png","./img/face/vxo05.png","./img/face/vxo07.png","./img/face/vxo08.png","./img/face/vxo09.png","./img/face/vxo11.png","./img/face/vxo14.png","./img/face/icon.jpg"];
     const loadSystemImage = Array(systemImages.length).fill(null);
     const loadMonsterImage = Array(monsterImages.length).fill(null);
     const loadFaceImage = Array(faceImages.length).fill(null);
-    let loadTime = 3;
-    let loopEvent = null;
+    let loadTime = 3;//読み込み配列数
+    let loopEvent = null;//メイン用インターバル
+    let openingAnime = null;//タイトルアニメ用インターバル
+    let openingCount = 0;//タイトルアニメ用カウンター
+    let openingMessage = 0;//0でタイトル、1でHTP、2でクレジット、3で削除確認、4で削除完了
 
     let savedata = null;//セーブデータ
-    let continuefrag = false;//
+    let continuefrag = true;//セーブ機能
     let viewXY = [0,0];//canvas上でのカーソルの場所
 
     let autoSpeedSum = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];//秒間加算金額

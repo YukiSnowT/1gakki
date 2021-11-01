@@ -23,14 +23,14 @@
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         if(myPrice[13]<100&&myPrice[14]==0&&myPrice[15]==0&&myPrice[16]==0&&myPrice[17]==0){
-            ctx.font = Math.max(cvy/10,10) + "px sans";
+            ctx.font = Math.max(cvy/10,10) + "px sans";////ココノセイ！！
         }else if(myPrice[14]<1000&&myPrice[15]==0&&myPrice[16]==0&&myPrice[17]==0){
             ctx.font = "10px sans";
         }else{
             ctx.font = "0px sans";
         }
         ctx.fillText("所持金：",5,cvy/16);
-        ctx.font = Math.max(cvy/10,10) + "px sans";
+        ctx.font = Math.max(cvy/10,10) + "px sans";/////ココノセイ！
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
         ctx.fillText(priceText(n), cvx-5,cvy/16);
@@ -45,12 +45,6 @@
         ctx.textAlign = "right";
         ctx.textBaseline = "ideographic";
         ctx.fillText("Now Loading...",cvx-2,cvy);
-    }
-
-    //オープニング画面の描画
-    const displayOpening = () =>{
-        ctx.clearRect(0, 0,cvx,cvy);
-        ctx.drawImage(loadSystemImage[0],0,0,cvx,cvy)
     }
 
     //メインゲーム画面の描画
@@ -143,7 +137,7 @@
         // ctx.strokeStyle='#000';
         ctx.textAlign = "center";
         ctx.textBaseline = "ideographic";
-        ctx.font = "bold" +  Math.max(cvy/20,10) + "px sans";
+        ctx.font = "bold" +  Math.max(cvy/15,10) + "px sans";
         ctx.fillText(msg1 + monsterName[monsterImgNum] + msg2,cvx/2,cvy/1.5,cvx)
         // ctx.strokeText(monsterName[monsterImgNum] + msg,cvx/2,cvy/1.5,cvx)
     }

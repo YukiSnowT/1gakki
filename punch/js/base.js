@@ -4,6 +4,8 @@
     //ループ処理
     const mainAct = () =>{
         //画像の描画
+        console.log(ctx.font)
+        
         ctx.clearRect(0, 0,cvx,cvy);
         ctx.globalAlpha=1;
         if(nowMonsterNum < monsterSumNum()){
@@ -88,7 +90,6 @@
                     document.getElementById("text2_" + num).textContent="LEVEL:" + autoSpeedLevel[num]
                     
                     displayMyprice();
-                    
                     
                 }
             }

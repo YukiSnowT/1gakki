@@ -59,7 +59,7 @@
             autoSpeedLevel.push(0);
             priceLevel.push(nextLevel(priceLevel[priceLevel.length-1]));
         }
-        if(num+2==priceLevel.length&&autoSpeedLevel[faceName.length-1]==0){
+        if(num+2==priceLevel.length||autoSpeedLevel[faceName.length-1]==0){
             displayFace(faceName[num][1],faceName[num][2],ctxm[num],0.5);
             ctxm[num].drawImage(loadSystemImage[2],0,0,faceSize,faceSize);
         }else{
