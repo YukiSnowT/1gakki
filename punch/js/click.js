@@ -59,13 +59,12 @@ const clickEvent = () =>{
                     displayMainGame();
                     loopEvent = setInterval(mainAct,1000/30)////加速テスト後は1000/30に変更→baseも
                 }
-
             }else{
                 if(openingMessage==3&&viewXY[0]>cvx/8&&viewXY[0]<cvx/8*3&&viewXY[1]>cvx/18*7+40&&viewXY[1]<cvx/18*10+40){
                     // openingButton(cvx/8,cvx/18*7+40,cvx/4,cvy/6,1);
                     localStorage.removeItem("mydata",JSON.stringify(savedata));
+
                     openingMessage = 4;
-                    console.log("tesu");
                 }else{
                     openingMessage = 0;
                 }

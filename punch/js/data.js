@@ -24,6 +24,7 @@ const dataSave = () =>{
 
 const dataLoad = () => {
     if(!localStorage.getItem("mydata")){
+        continuefrag = false;
         //データがない場合の処理
     }else{
         //savedataに格納されていた順番で各変数に値を戻す
