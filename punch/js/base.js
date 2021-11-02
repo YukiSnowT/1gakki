@@ -73,6 +73,9 @@
                         console.log(nn)
                         const x = document.getElementById("text1_" + num);
                         x.innerHTML=faceName[num][0] + " " + priceText(nn) + "/秒";
+                        if(priceText(nn)[0]>=12){
+                            x.setAttribute("style","font-size:8px");
+                        }
                     }
                     autoSpeedLevel[num]++;
                     needMoney = Math.floor(1.5*needMoney);//レベルアップ処理

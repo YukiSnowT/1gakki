@@ -23,6 +23,9 @@
         levelText1.setAttribute("id", "text1_" + num);
         levelText1.setAttribute("class", "textLevel");
         levelText1.innerHTML=faceName[num][0] + " " + priceText(workerSpeed[num]) + "/秒";
+        if(priceText(workerSpeed[num])[0]>=12){
+            x.setAttribute("style","font-size:8px");
+        }
 
         //レベル帯の文章表示作成
         let levelText2 = document.createElement("div");
