@@ -77,7 +77,7 @@ const setMonsterImage = () =>{
         if(i>=31){
             png = ".jpg";
         }
-        monsterImages.push("./img/monster/" + j + monsterName[i-1] + png)
+        monsterImages.push("./img/monster/monster" + j + png)
     }
 }
 
