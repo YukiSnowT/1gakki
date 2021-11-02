@@ -66,6 +66,13 @@
                         if(num<faceName.length-1){
                             putMenu(autoSpeedLevel.length);
                         }
+                    }else{
+                        console.log(num)
+                        let nn = [workerSpeed[num][0],workerSpeed[num][1]*(autoSpeedLevel[num]+1)*(autoSpeedLevel[num]+1),workerSpeed[num][2]*(autoSpeedLevel[num]+1)*(autoSpeedLevel[num]+1)];
+                        nn = advprice(nn);
+                        console.log(nn)
+                        const x = document.getElementById("text1_" + num);
+                        x.innerHTML=faceName[num][0] + " " + priceText(nn) + "/秒";
                     }
                     autoSpeedLevel[num]++;
                     needMoney = Math.floor(1.5*needMoney);//レベルアップ処理
@@ -74,7 +81,7 @@
                         needMoney = Math.round(needMoney/10000);
                     }
                     priceLevel[num][1]=Math.round(needMoney%10000);
-                    priceLevel[num][2]=Math.floor(needMoney/10000);    
+                    priceLevel[num][2]=Math.floor(needMoney/10000);
                     if(priceLevel[num][0]>16){
                         priceLevel[num][0]=16;
                         priceLevel[num][1]=9999;
