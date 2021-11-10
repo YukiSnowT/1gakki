@@ -23,8 +23,8 @@
         levelText1.setAttribute("id", "text1_" + num);
         levelText1.setAttribute("class", "textLevel");
         levelText1.innerHTML=faceName[num][0] + " " + priceText(workerSpeed[num]) + "/秒";
-        if(priceText(workerSpeed[num])[0]>=12){
-            x.setAttribute("style","font-size:8px");
+        if(workerSpeed[num][0]>=12){
+            levelText1.setAttribute("style","font-size:8px; padding-top:3px; padding-bottom:4px");
         }
 
         //レベル帯の文章表示作成

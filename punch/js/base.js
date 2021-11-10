@@ -4,8 +4,7 @@
     //ループ処理
     const mainAct = () =>{
         //画像の描画
-        console.log(ctx.font)
-        
+        console.log(ctx.font)//バグ取り終わったらここ消す！
         ctx.clearRect(0, 0,cvx,cvy);
         ctx.globalAlpha=1;
         if(nowMonsterNum < monsterSumNum()){
@@ -18,13 +17,16 @@
         }
         if(animationM>150){
             displayMonster(nowMonsterNum,"VS ","",(nowMonsterNum<30))
+            displayHP(cvx/3,cvy/32*5,cvx/3);
         }else if(animationM>50){
             displayMonster(nowMonsterNum,"","があらわれた！",(nowMonsterNum<30))
             animationM++;
+            displayHP(cvx/3,cvy/32*5,cvx/3);
         }else{
             if(nowMonsterNum == 0){
                 displayMonster(nowMonsterNum,"","があらわれた！",(nowMonsterNum<30))
                 animationM=51;
+                displayHP(cvx/3,cvy/32*5,cvx/3);
             }else{
                 displayMonster(nowMonsterNum-1,"","を倒した！",(nowMonsterNum<30))
                 animationM++;
@@ -74,7 +76,7 @@
                         const x = document.getElementById("text1_" + num);
                         x.innerHTML=faceName[num][0] + " " + priceText(nn) + "/秒";
                         if(priceText(nn)[0]>=12){
-                            x.setAttribute("style","font-size:8px");
+                            x.setAttribute("style","font-size:8px; padding-top:3px; padding-bottom:4px");
                         }
                     }
                     autoSpeedLevel[num]++;

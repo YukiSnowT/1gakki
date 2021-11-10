@@ -141,3 +141,21 @@
         }
         return num;
     }
+
+    //現在のsumMyPriceから敵のHP割合を求める
+    const monsterHP = () =>{
+        let b = 0;
+        let num = 0;
+        for(i=sumMyPrice.length;i>0;i--){
+            if(sumMyPrice[i]>0){
+                b = i;
+                break;
+            }
+        }
+        if(Math.floor(sumMyPrice[b]/100)>0){
+            num = Math.ceil(100-((sumMyPrice[b]-100)/99));
+        }else{
+            num = Math.ceil(100-((sumMyPrice[b]-1)/0.99));
+        }
+        return num/100;
+    }

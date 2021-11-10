@@ -157,3 +157,16 @@
         context.drawImage(face,sx,sy,sWidth,sHeight,0,0,faceSize,faceSize);
         context.globalAlpha = 1;
     }
+
+    //HPバーの表示
+    const displayHP = (x,y,wid) =>{
+        const pic1 = loadSystemImage[6];
+        const pic2 = loadSystemImage[7];
+        const pic3 = loadSystemImage[8];
+        const xxx = pic1.width;
+        const yyy = pic1.height;
+        let barlong = monsterHP();
+        ctx.drawImage(pic3,x,y,wid,wid*yyy/xxx);
+        ctx.drawImage(pic2,0,0,xxx*barlong,yyy,x,y,wid*barlong,wid*yyy/xxx);
+        ctx.drawImage(pic1,x,y,wid,wid*yyy/xxx);
+    }

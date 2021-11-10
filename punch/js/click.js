@@ -15,8 +15,8 @@ const clickLevelUp = () =>{
     if(subcheck(clickPrice)&&clickLevel<100){
         subPrice(clickPrice);
         clickLevel++;
-        clickGet[1] = Math.floor(clickGet[1]*4.2);
-        clickGet[2] = Math.floor(clickGet[2]*4.2);
+        clickGet[1] = Math.floor(clickGet[1]*(4.2+clickLevel/100));
+        clickGet[2] = Math.floor(clickGet[2]*(4.2+clickLevel/100));
         clickGet = advprice(clickGet);
         clickPrice[1] *= 5;
         clickPrice[2] *= 5;
