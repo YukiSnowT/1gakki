@@ -43,6 +43,8 @@
     let animationM = 100;
     let nowMonsterNum = 0;
     let sumMyPrice = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]//これまでの累計
+    let mojisizeA = Math.max(cvy/10,10);
+    let mojisizeB = Math.max(cvy/22,8);
 
     
     //初期スピードのセット

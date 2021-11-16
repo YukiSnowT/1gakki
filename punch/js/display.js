@@ -23,14 +23,14 @@
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         if(myPrice[13]<100&&myPrice[14]==0&&myPrice[15]==0&&myPrice[16]==0&&myPrice[17]==0){
-            ctx.font = Math.max(cvy/10,10) + "px sans";////ココノセイ！！
+            ctx.font = mojisizeB + "px sans";////ココノセイ！！
         }else if(myPrice[14]<1000&&myPrice[15]==0&&myPrice[16]==0&&myPrice[17]==0){
             ctx.font = "10px sans";
         }else{
             ctx.font = "0px sans";
         }
         ctx.fillText("所持金：",5,cvy/16);
-        ctx.font = Math.max(cvy/10,10) + "px sans";/////ココノセイ！
+        ctx.font = mojisizeB + "px sans";/////ココノセイ！
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
         ctx.fillText(priceText(n), cvx-5,cvy/16);
@@ -41,7 +41,7 @@
     const displayNowLoading = () =>{
         ctx.clearRect(0, 0,cvx,cvy);
         ctx.fillStyle='#fff';
-        ctx.font = Math.max(cvy/10,10) + "px sans";
+        ctx.font = mojisizeA + "px sans";
         ctx.textAlign = "right";
         ctx.textBaseline = "ideographic";
         ctx.fillText("Now Loading...",cvx-2,cvy);
@@ -69,7 +69,7 @@
 
     //click関連のcanvas表示
     const displayClickLevel = () =>{
-        let fsize = Math.max(cvy/22,8);
+        // let fsize = Math.max(cvy/22,8);
         ctx.fillStyle='#000';
         ctx.fillRect(0, cvy/1.5,cvx-2,cvy/3);
         if(subcheck(clickPrice)&&clickLevel<100){
@@ -81,19 +81,19 @@
         ctx.fillStyle='#000';
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
-        ctx.font = "bold " + fsize + "px sans";
+        ctx.font = "bold " + mojisizeB + "px sans";
         ctx.fillText("『" + degree[Math.floor((clickLevel-1)/3)] + "勇者』",10,cvy/1.5+5);
-        ctx.font = "normal " + fsize + "px sans";
-        ctx.fillText("現在のレベル：" + clickLevel,10,cvy/1.5+5+fsize+cvy/25);
-        ctx.fillText("クリック１回の報酬：" + priceText(clickGet),5,cvy/1.5+5+fsize*2+cvy/25*2);
+        ctx.font = "normal " + mojisizeB + "px sans";
+        ctx.fillText("現在のレベル：" + clickLevel,10,cvy/1.5+5+mojisizeB+cvy/25);
+        ctx.fillText("クリック１回の報酬：" + priceText(clickGet),5,cvy/1.5+5+mojisizeB*2+cvy/25*2);
         if(clickLevel<100){
-            ctx.fillText("次のレベルに必要な金額：" + priceText(clickPrice) ,5,cvy/1.5+5+fsize*3+cvy/25*3);
+            ctx.fillText("次のレベルに必要な金額：" + priceText(clickPrice) ,5,cvy/1.5+5+mojisizeB*3+cvy/25*3);
         }else{
-            ctx.fillText("LEVELMAX!",5,cvy/1.5+5+fsize*3+cvy/25*3);
+            ctx.fillText("LEVELMAX!",5,cvy/1.5+5+mojisizeB*3+cvy/25*3);
         }
 
-        ctx.fillRect(3,cvy/1.5+8+fsize*2+cvx/25,cvx-6,1);
-        ctx.fillRect(3,cvy/1.5+8+fsize*3+cvy/25*2,cvx-6,1);
+        ctx.fillRect(3,cvy/1.5+8+mojisizeB*2+cvx/25,cvx-6,1);
+        ctx.fillRect(3,cvy/1.5+8+mojisizeB*3+cvy/25*2,cvx-6,1);
     }
 
 
@@ -137,7 +137,7 @@
         // ctx.strokeStyle='#000';
         ctx.textAlign = "center";
         ctx.textBaseline = "ideographic";
-        ctx.font = "bold" +  Math.max(cvy/15,10) + "px sans";
+        ctx.font = "bold" +  mojisizeA + "px sans";
         ctx.fillText(msg1 + monsterName[monsterImgNum] + msg2,cvx/2,cvy/1.5,cvx)
         // ctx.strokeText(monsterName[monsterImgNum] + msg,cvx/2,cvy/1.5,cvx)
     }
